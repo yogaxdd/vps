@@ -247,6 +247,7 @@ function renderInstancesTable() {
             <td>
                 <div class="action-buttons">
                     <button class="btn btn-small btn-secondary" onclick="openConsole('${inst.userId}')">Console</button>
+                    <button class="btn btn-small btn-secondary" onclick="openPackages('${inst.userId}')">📦</button>
                     <button class="btn btn-small btn-secondary" onclick="openFiles('${inst.userId}')">Files</button>
                     ${inst.pm2?.status === 'online'
             ? `<button class="btn btn-small btn-danger" onclick="stopInstance('${inst.userId}')">Stop</button>`
@@ -428,6 +429,99 @@ async function saveFile() {
     }
 }
 
+// ============ Package Manager ============
+let currentPackageInstance = null;
+let currentPackageRuntime = null;
+
+async function openPackages(id) {
+    currentPackageInstance = id;
+
+    document.getElementById('packageTitle').textContent = id;
+    document.getElementById('packageModal').classList.add('active');
+    document.getElementById('packageStatus').textContent = 'Loading...';
+
+    await loadPackages();
+}
+
+async function loadPackages() {
+    if (!currentPackageInstance) return;
+
+    const data = await API.get(`/api/instance/${currentPackageInstance}/packages`);
+
+    if (data.success) {
+        currentPackageRuntime = data.runtime;
+
+        // Update runtime badge
+        const runtimeEl = document.getElementById('packageRuntime');
+        runtimeEl.textContent = data.runtime === 'node' ? 'NodeJS' : 'Python';
+        runtimeEl.className = `runtime-badge ${data.runtime}`;
+
+        // Update file name
+        const fileName = data.runtime === 'node' ? 'package.json' : 'requirements.txt';
+        document.getElementById('packageFile').textContent = fileName;
+        document.getElementById('packageFileBtn').textContent = fileName;
+
+        // Show missing packages
+        const missingAlert = document.getElementById('missingPackagesAlert');
+        const missingList = document.getElementById('missingPackagesList');
+
+        if (data.missingPackages && data.missingPackages.length > 0) {
+            missingAlert.style.display = 'block';
+            missingList.innerHTML = data.missingPackages.map(p =>
+                `<span style="display: inline-block; background: rgba(255,171,0,0.2); padding: 2px 8px; border-radius: 4px; margin: 2px;">${p}</span>`
+            ).join(' ');
+        } else {
+            missingAlert.style.display = 'none';
+        }
+
+        // Show dependencies
+        const depsList = document.getElementById('dependenciesList');
+        const deps = Object.entries(data.dependencies);
+
+        if (deps.length > 0) {
+            depsList.innerHTML = deps.map(([name, version]) =>
+                `<div style="padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">${name}: <span style="color: var(--accent);">${version}</span></div>`
+            ).join('');
+        } else {
+            depsList.innerHTML = '<p style="color: var(--text-muted);">No dependencies installed</p>';
+        }
+
+        document.getElementById('packageStatus').textContent = 'Ready';
+    } else {
+        showToast(data.error, 'error');
+    }
+}
+
+async function installPackage(packages) {
+    if (!currentPackageInstance) return;
+
+    const endpoint = currentPackageRuntime === 'node'
+        ? `/api/instance/${currentPackageInstance}/npm-install`
+        : `/api/instance/${currentPackageInstance}/pip-install`;
+
+    document.getElementById('packageStatus').textContent = `Installing ${packages}...`;
+    showToast(`Installing ${packages}...`);
+
+    const data = await API.post(endpoint, { packages });
+
+    if (data.success) {
+        showToast('Packages installed!', 'success');
+        await loadPackages();
+    } else {
+        showToast(data.error || 'Install failed', 'error');
+        document.getElementById('packageStatus').textContent = 'Install failed';
+    }
+}
+
+async function installMissingPackages() {
+    const missingList = document.getElementById('missingPackagesList');
+    const packages = Array.from(missingList.querySelectorAll('span')).map(s => s.textContent).join(' ');
+
+    if (packages) {
+        await installPackage(packages);
+    }
+}
+
 // ============ Users (Admin) ============
 async function loadUsers() {
     const data = await API.get('/api/users');
@@ -578,6 +672,28 @@ function setupEventListeners() {
     });
 
     elements.saveFileEditor.addEventListener('click', saveFile);
+
+    // Package Manager Modal
+    document.getElementById('closePackage')?.addEventListener('click', () => {
+        document.getElementById('packageModal').classList.remove('active');
+        currentPackageInstance = null;
+    });
+
+    document.getElementById('btnInstallPackage')?.addEventListener('click', () => {
+        const input = document.getElementById('newPackageName');
+        if (input.value.trim()) {
+            installPackage(input.value.trim());
+            input.value = '';
+        }
+    });
+
+    document.getElementById('btnInstallMissing')?.addEventListener('click', installMissingPackages);
+
+    document.getElementById('btnEditPackageFile')?.addEventListener('click', () => {
+        const fileName = currentPackageRuntime === 'node' ? 'package.json' : 'requirements.txt';
+        document.getElementById('packageModal').classList.remove('active');
+        openFileEditor(currentPackageInstance, fileName);
+    });
 
     // Close modals on outside click
     document.querySelectorAll('.modal').forEach(modal => {

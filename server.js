@@ -356,6 +356,165 @@ app.get('/api/instance/:id/files', authManager.authMiddleware, (req, res) => {
     }
 });
 
+// ============ PACKAGE MANAGEMENT ============
+
+const { exec } = require('child_process');
+
+// Install npm packages
+app.post('/api/instance/:id/npm-install', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const { packages } = req.body; // Optional: specific packages
+        const userDir = instanceManager.getUserDir(id);
+
+        if (!fs.existsSync(userDir)) {
+            return res.status(404).json({ success: false, error: 'Instance not found' });
+        }
+
+        // Create package.json if not exists
+        const pkgPath = path.join(userDir, 'package.json');
+        if (!fs.existsSync(pkgPath)) {
+            fs.writeFileSync(pkgPath, JSON.stringify({
+                name: id,
+                version: "1.0.0",
+                main: "app.js",
+                dependencies: {}
+            }, null, 2));
+        }
+
+        const cmd = packages ? `npm install ${packages} --save` : 'npm install';
+
+        logManager.append(id, `Running: ${cmd}`);
+
+        exec(cmd, { cwd: userDir, timeout: 120000 }, (error, stdout, stderr) => {
+            if (error) {
+                logManager.append(id, `npm error: ${error.message}`);
+                return res.json({ success: false, error: error.message, output: stderr });
+            }
+
+            logManager.append(id, `npm install completed`);
+            logManager.append(id, stdout);
+
+            res.json({ success: true, message: 'Packages installed', output: stdout });
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Install pip packages
+app.post('/api/instance/:id/pip-install', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const { packages } = req.body; // Optional: specific packages
+        const userDir = instanceManager.getUserDir(id);
+
+        if (!fs.existsSync(userDir)) {
+            return res.status(404).json({ success: false, error: 'Instance not found' });
+        }
+
+        // Create requirements.txt if not exists
+        const reqPath = path.join(userDir, 'requirements.txt');
+        if (!fs.existsSync(reqPath)) {
+            fs.writeFileSync(reqPath, '# Add your Python dependencies here\n');
+        }
+
+        const cmd = packages
+            ? `pip3 install ${packages}`
+            : `pip3 install -r requirements.txt`;
+
+        logManager.append(id, `Running: ${cmd}`);
+
+        exec(cmd, { cwd: userDir, timeout: 120000 }, (error, stdout, stderr) => {
+            if (error) {
+                logManager.append(id, `pip error: ${error.message}`);
+                return res.json({ success: false, error: error.message, output: stderr });
+            }
+
+            logManager.append(id, `pip install completed`);
+            logManager.append(id, stdout);
+
+            res.json({ success: true, message: 'Packages installed', output: stdout });
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Get package info (detect missing modules from logs)
+app.get('/api/instance/:id/packages', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const instance = instanceManager.get(id);
+        const userDir = instanceManager.getUserDir(id);
+
+        if (!instance) {
+            return res.status(404).json({ success: false, error: 'Instance not found' });
+        }
+
+        let dependencies = {};
+        let missingPackages = [];
+
+        // Read package.json or requirements.txt
+        if (instance.runtime === 'node') {
+            const pkgPath = path.join(userDir, 'package.json');
+            if (fs.existsSync(pkgPath)) {
+                try {
+                    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+                    dependencies = pkg.dependencies || {};
+                } catch (e) { }
+            }
+        } else {
+            const reqPath = path.join(userDir, 'requirements.txt');
+            if (fs.existsSync(reqPath)) {
+                const content = fs.readFileSync(reqPath, 'utf8');
+                content.split('\n').forEach(line => {
+                    line = line.trim();
+                    if (line && !line.startsWith('#')) {
+                        const match = line.match(/^([a-zA-Z0-9_-]+)/);
+                        if (match) {
+                            dependencies[match[1]] = line;
+                        }
+                    }
+                });
+            }
+        }
+
+        // Analyze logs for missing modules
+        const logs = logManager.readLast(id, 200);
+        const logText = logs.lines.join('\n');
+
+        // Detect Node.js missing modules
+        const nodeMatches = logText.matchAll(/Cannot find module '([^']+)'/g);
+        for (const match of nodeMatches) {
+            if (!match[1].startsWith('.') && !match[1].startsWith('/')) {
+                missingPackages.push(match[1]);
+            }
+        }
+
+        // Detect Python missing modules
+        const pythonMatches = logText.matchAll(/ModuleNotFoundError: No module named '([^']+)'/g);
+        for (const match of pythonMatches) {
+            missingPackages.push(match[1]);
+        }
+
+        // Remove duplicates
+        missingPackages = [...new Set(missingPackages)];
+
+        res.json({
+            success: true,
+            runtime: instance.runtime,
+            dependencies,
+            missingPackages,
+            hasPackageFile: instance.runtime === 'node'
+                ? fs.existsSync(path.join(userDir, 'package.json'))
+                : fs.existsSync(path.join(userDir, 'requirements.txt'))
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // ============ USER MANAGEMENT (Admin only) ============
 
 app.get('/api/users', authManager.authMiddleware, authManager.adminMiddleware, (req, res) => {
