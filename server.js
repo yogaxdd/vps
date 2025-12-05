@@ -1,0 +1,434 @@
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const cookieParser = require('cookie-parser');
+
+const pm2Manager = require('./lib/pm2Manager');
+const cgroupManager = require('./lib/cgroupManager');
+const instanceManager = require('./lib/instanceManager');
+const logManager = require('./lib/logManager');
+const authManager = require('./lib/authManager');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// Serve static files (frontend)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// File upload config
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const userId = req.params.id;
+        const userDir = instanceManager.getUserDir(userId);
+        if (!fs.existsSync(userDir)) {
+            return cb(new Error('Instance not found'));
+        }
+        cb(null, userDir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, file.originalname);
+    }
+});
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }
+});
+
+// ============ AUTH ROUTES (Public) ============
+
+// Login page
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+// Login API
+app.post('/api/auth/login', (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        if (!username || !password) {
+            return res.status(400).json({ success: false, error: 'Username and password required' });
+        }
+
+        const result = authManager.login(username, password);
+
+        if (!result) {
+            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        }
+
+        // Set cookie
+        res.cookie('token', result.token, {
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
+
+        res.json({ success: true, ...result });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Logout API
+app.post('/api/auth/logout', (req, res) => {
+    const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.token;
+    if (token) {
+        authManager.logout(token);
+    }
+    res.clearCookie('token');
+    res.json({ success: true, message: 'Logged out' });
+});
+
+// Check auth status
+app.get('/api/auth/me', authManager.authMiddleware, (req, res) => {
+    res.json({ success: true, user: req.user });
+});
+
+// ============ PROTECTED ROUTES ============
+
+// Health check (public)
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        cgroupsAvailable: cgroupManager.isAvailable()
+    });
+});
+
+// List all instances
+app.get('/api/instances', authManager.authMiddleware, async (req, res) => {
+    try {
+        const instances = instanceManager.list();
+
+        const pm2List = await pm2Manager.listAll();
+        const pm2Map = {};
+        pm2List.forEach(p => pm2Map[p.userId] = p);
+
+        const result = instances.map(inst => ({
+            ...inst,
+            pm2: pm2Map[inst.userId] || null
+        }));
+
+        res.json({ success: true, instances: result });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Create new instance
+app.post('/api/instance', authManager.authMiddleware, (req, res) => {
+    try {
+        const { userId, runtime = 'node', maxMemory = 100 } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({ success: false, error: 'userId is required' });
+        }
+
+        if (!/^[a-zA-Z0-9_-]+$/.test(userId)) {
+            return res.status(400).json({ success: false, error: 'Invalid userId format' });
+        }
+
+        if (!['node', 'python'].includes(runtime)) {
+            return res.status(400).json({ success: false, error: 'Invalid runtime' });
+        }
+
+        const mem = parseInt(maxMemory);
+        if (isNaN(mem) || mem < 50 || mem > 500) {
+            return res.status(400).json({ success: false, error: 'maxMemory must be 50-500' });
+        }
+
+        const instance = instanceManager.create(userId, runtime, mem);
+
+        if (cgroupManager.isAvailable()) {
+            cgroupManager.createGroup(userId, mem);
+        }
+
+        res.json({ success: true, instance });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Get instance details
+app.get('/api/instance/:id', authManager.authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const instance = instanceManager.get(id);
+
+        if (!instance) {
+            return res.status(404).json({ success: false, error: 'Instance not found' });
+        }
+
+        const pm2Status = await pm2Manager.getStatus(id);
+        const memoryUsage = cgroupManager.getMemoryUsage(id);
+
+        res.json({
+            success: true,
+            instance,
+            pm2: pm2Status,
+            memory: memoryUsage
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Delete instance
+app.delete('/api/instance/:id', authManager.authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        try {
+            await pm2Manager.deleteProcess(id);
+        } catch (e) { }
+
+        cgroupManager.deleteGroup(id);
+        instanceManager.remove(id);
+
+        res.json({ success: true, message: 'Instance deleted' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Start instance
+app.post('/api/instance/:id/start', authManager.authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const instance = instanceManager.get(id);
+
+        if (!instance) {
+            return res.status(404).json({ success: false, error: 'Instance not found' });
+        }
+
+        await pm2Manager.startProcess(id, instance.runtime, instance.maxMemory);
+        instanceManager.updateStatus(id, 'running');
+        logManager.append(id, 'Bot started via Panel');
+
+        res.json({ success: true, message: 'Bot started' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Stop instance
+app.post('/api/instance/:id/stop', authManager.authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        await pm2Manager.stopProcess(id);
+        instanceManager.updateStatus(id, 'stopped');
+        logManager.append(id, 'Bot stopped via Panel');
+
+        res.json({ success: true, message: 'Bot stopped' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Restart instance
+app.post('/api/instance/:id/restart', authManager.authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        await pm2Manager.restartProcess(id);
+        instanceManager.updateStatus(id, 'running');
+        logManager.append(id, 'Bot restarted via Panel');
+
+        res.json({ success: true, message: 'Bot restarted' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Get logs (PERSISTENT - tidak dihapus)
+app.get('/api/instance/:id/logs', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const lines = parseInt(req.query.lines) || 500; // Default 500 lines
+
+        const instance = instanceManager.get(id);
+        if (!instance) {
+            return res.status(404).json({ success: false, error: 'Instance not found' });
+        }
+
+        const logs = logManager.readLast(id, lines);
+        res.json({ success: true, logs });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Clear logs (manual only)
+app.delete('/api/instance/:id/logs', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        logManager.clear(id);
+        res.json({ success: true, message: 'Logs cleared' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Upload file
+app.post('/api/instance/:id/upload', authManager.authMiddleware, upload.single('file'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: 'No file uploaded' });
+        }
+
+        logManager.append(req.params.id, `File uploaded: ${req.file.originalname}`);
+
+        res.json({
+            success: true,
+            message: 'File uploaded',
+            filename: req.file.originalname,
+            size: req.file.size
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Get file content
+app.get('/api/instance/:id/file/:filename', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id, filename } = req.params;
+        const userDir = instanceManager.getUserDir(id);
+        const filePath = path.join(userDir, filename);
+
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ success: false, error: 'File not found' });
+        }
+
+        const content = fs.readFileSync(filePath, 'utf8');
+        res.json({ success: true, filename, content });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Save file content
+app.put('/api/instance/:id/file/:filename', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id, filename } = req.params;
+        const { content } = req.body;
+        const userDir = instanceManager.getUserDir(id);
+        const filePath = path.join(userDir, filename);
+
+        fs.writeFileSync(filePath, content);
+        logManager.append(id, `File saved: ${filename}`);
+
+        res.json({ success: true, message: 'File saved' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// List files in instance
+app.get('/api/instance/:id/files', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const userDir = instanceManager.getUserDir(id);
+
+        if (!fs.existsSync(userDir)) {
+            return res.status(404).json({ success: false, error: 'Instance not found' });
+        }
+
+        const files = fs.readdirSync(userDir).map(f => {
+            const stat = fs.statSync(path.join(userDir, f));
+            return {
+                name: f,
+                size: stat.size,
+                isDirectory: stat.isDirectory(),
+                modified: stat.mtime
+            };
+        });
+
+        res.json({ success: true, files });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ============ USER MANAGEMENT (Admin only) ============
+
+app.get('/api/users', authManager.authMiddleware, authManager.adminMiddleware, (req, res) => {
+    try {
+        const users = authManager.listUsers();
+        res.json({ success: true, users });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.post('/api/users', authManager.authMiddleware, authManager.adminMiddleware, (req, res) => {
+    try {
+        const { username, password, role = 'user' } = req.body;
+        const user = authManager.createUser(username, password, role);
+        res.json({ success: true, user });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.delete('/api/users/:username', authManager.authMiddleware, authManager.adminMiddleware, (req, res) => {
+    try {
+        authManager.deleteUser(req.params.username);
+        res.json({ success: true, message: 'User deleted' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.put('/api/users/:username/password', authManager.authMiddleware, (req, res) => {
+    try {
+        const { username } = req.params;
+        const { newPassword } = req.body;
+
+        // User can only change their own password, admin can change any
+        if (req.user.role !== 'admin' && req.user.username !== username) {
+            return res.status(403).json({ success: false, error: 'Forbidden' });
+        }
+
+        authManager.changePassword(username, newPassword);
+        res.json({ success: true, message: 'Password changed' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ============ CATCH-ALL FOR SPA ============
+
+app.get('*', (req, res) => {
+    // If requesting API, return 404
+    if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ success: false, error: 'Not found' });
+    }
+    // Otherwise serve index.html
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ============ ERROR HANDLER ============
+
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ success: false, error: err.message });
+});
+
+// ============ START SERVER ============
+
+app.listen(PORT, () => {
+    console.log(`Panel VPS running on port ${PORT}`);
+    console.log(`cgroups v2 available: ${cgroupManager.isAvailable()}`);
+    console.log(`Default login: admin / admin123`);
+
+    if (cgroupManager.isAvailable()) {
+        cgroupManager.init();
+    }
+});
