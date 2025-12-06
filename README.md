@@ -1,135 +1,113 @@
-# Panel VPS - Lightweight Bot Management
+# NeuroPanel - Simple VPS Bot Manager
 
-Panel manajemen bot sederhana untuk VPS dengan resource terbatas (1GB RAM).
+Lightweight panel untuk manage bot Python/Node.js di VPS.
 
-## Features
+## 🚀 Quick Start
 
-- ✅ Start/Stop/Restart bot via API
-- ✅ Support NodeJS & Python runtime
-- ✅ RAM limiting per process (cgroups v2)
-- ✅ Log viewer
-- ✅ File upload
-- ✅ Autostart saat reboot (systemd)
-- ✅ PM2 integration
-
-## Requirements
-
-- Ubuntu 22.04+ / Debian 11+
-- NodeJS 18+
-- Python 3.8+
-- Root access
-
-## Quick Install
-
+### 1. Upload ke VPS
 ```bash
-# Clone/upload files to VPS
-cd /root
-git clone https://github.com/yourusername/panel-vps.git
-cd panel-vps
+# Upload semua file ke /home/vps/
+scp -r * ubuntu@YOUR_IP:/home/vps/
+```
 
-# Run installer
+### 2. Install
+```bash
+cd /home/vps
 chmod +x install.sh
 sudo ./install.sh
 ```
 
-## API Endpoints
-
-### Health Check
-```bash
-curl http://localhost:3000/api/health
+### 3. Akses Panel
+```
+http://YOUR_IP:3000
+Login: admin / admin123
 ```
 
-### Create Instance
-```bash
-curl -X POST http://localhost:3000/api/instance \
-  -H "Content-Type: application/json" \
-  -d '{"userId":"bot1","runtime":"node","maxMemory":100}'
-```
+## 📱 Mobile Access
+Panel bisa diakses dari HP dengan URL yang sama: `http://YOUR_IP:3000`
 
-### Start Bot
-```bash
-curl -X POST http://localhost:3000/api/instance/bot1/start
-```
-
-### Stop Bot
-```bash
-curl -X POST http://localhost:3000/api/instance/bot1/stop
-```
-
-### Restart Bot
-```bash
-curl -X POST http://localhost:3000/api/instance/bot1/restart
-```
-
-### Get Logs
-```bash
-curl http://localhost:3000/api/instance/bot1/logs?lines=50
-```
-
-### Upload File
-```bash
-curl -X POST http://localhost:3000/api/instance/bot1/upload \
-  -F "file=@app.js"
-```
-
-### List All Instances
-```bash
-curl http://localhost:3000/api/instances
-```
-
-### Delete Instance
-```bash
-curl -X DELETE http://localhost:3000/api/instance/bot1
-```
-
-## File Structure
-
-```
-/home/panel/
-├── server.js           # Main API
-├── package.json
-├── lib/
-│   ├── pm2Manager.js
-│   ├── cgroupManager.js
-│   ├── instanceManager.js
-│   └── logManager.js
-├── data/
-│   └── instances.json
-└── users/
-    └── [userid]/
-        ├── app.js / app.py
-        ├── log.txt
-        └── config.json
-```
-
-## Memory Budget (1GB VPS)
-
-| Komponen | RAM |
-|----------|-----|
-| OS + Linux | ~200MB |
-| Panel API | ~50MB |
-| PM2 Daemon | ~30MB |
-| Available untuk bots | ~720MB |
-
-## Useful Commands
+## 🔧 Manual Setup (tanpa install.sh)
 
 ```bash
-# Panel status
-systemctl status panel-vps
+cd /home/vps
+npm install
+npm start
+```
 
-# Panel logs
-journalctl -u panel-vps -f
+## 📋 Features
+
+- ✅ Start/Stop/Restart bot
+- ✅ Real-time console logs
+- ✅ File manager (edit, upload)
+- ✅ Package manager (npm/pip install)
+- ✅ Memory limits per instance
+- ✅ Auto pip install on start
+- ✅ Configurable main file & requirements file
+
+## 🛠️ Commands
+
+```bash
+# Start panel
+npm start
+
+# View logs
+sudo journalctl -u panel-vps -f
 
 # Restart panel
-systemctl restart panel-vps
+sudo systemctl restart panel-vps
 
-# PM2 status
-pm2 list
-
-# PM2 logs
-pm2 logs
+# Stop panel
+sudo systemctl stop panel-vps
 ```
 
-## License
+## 📁 Structure
 
-MIT
+```
+/home/vps/
+├── server.js          # Main server
+├── lib/              # Backend modules
+├── public/           # Frontend files
+├── users/            # Bot instances
+└── data/             # Database files
+```
+
+## 🔐 Default Login
+
+- Username: `admin`
+- Password: `admin123`
+
+Change password di Settings page setelah login!
+
+## ⚙️ Instance Settings
+
+Setiap instance bisa di-configure:
+- **Main File**: nama file bot (app.py, bot.py, index.js, dll)
+- **Requirements File**: nama file dependencies (requirements.txt, package.json)
+- **Auto Install**: otomatis install dependencies saat start
+
+## 🐛 Troubleshooting
+
+**Panel tidak bisa diakses:**
+```bash
+# Cek status
+sudo systemctl status panel-vps
+
+# Cek logs
+sudo journalctl -u panel-vps -f
+
+# Restart
+sudo systemctl restart panel-vps
+```
+
+**Port 3000 tidak bisa diakses:**
+- Pastikan security group AWS allow port 3000
+- Atau pakai firewall: `sudo ufw allow 3000`
+
+**Bot tidak start:**
+- Cek console logs di panel
+- Pastikan file main (app.py/app.js) ada
+- Cek dependencies sudah terinstall
+
+## 📞 Support
+
+Untuk bug report atau feature request, hubungi developer.
