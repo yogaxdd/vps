@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/home/panel
-ExecStart=/usr/bin/node /home/panel/server.js
+WorkingDirectory=/home/ubuntu/vps
+ExecStart=/usr/bin/node /home/ubuntu/vps/server.js
 Restart=always
 RestartSec=10
 StandardOutput=syslog

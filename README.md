@@ -6,13 +6,13 @@ Lightweight panel untuk manage bot Python/Node.js di VPS.
 
 ### 1. Upload ke VPS
 ```bash
-# Upload semua file ke /home/vps/
-scp -r * ubuntu@YOUR_IP:/home/vps/
+# Upload semua file ke /home/ubuntu/vps/
+scp -r * ubuntu@YOUR_IP:/home/ubuntu/vps/
 ```
 
 ### 2. Install
 ```bash
-cd /home/vps
+cd /home/ubuntu/vps
 chmod +x install.sh
 sudo ./install.sh
 ```
@@ -29,7 +29,7 @@ Panel bisa diakses dari HP dengan URL yang sama: `http://YOUR_IP:3000`
 ## 🔧 Manual Setup (tanpa install.sh)
 
 ```bash
-cd /home/vps
+cd /home/ubuntu/vps
 npm install
 npm start
 ```
@@ -63,7 +63,7 @@ sudo systemctl stop panel-vps
 ## 📁 Structure
 
 ```
-/home/vps/
+/home/ubuntu/vps/
 ├── server.js          # Main server
 ├── lib/              # Backend modules
 ├── public/           # Frontend files

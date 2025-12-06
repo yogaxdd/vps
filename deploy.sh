@@ -3,7 +3,7 @@
 
 VPS_IP="3.107.81.18"
 VPS_USER="ubuntu"
-VPS_PATH="/home/vps"
+VPS_PATH="/home/ubuntu/vps"
 
 echo "🚀 Uploading files to VPS..."
 
@@ -16,6 +16,6 @@ rsync -avz --exclude 'node_modules' \
 echo "✅ Upload complete!"
 echo ""
 echo "Jalankan di VPS:"
-echo "  cd /home/vps"
+echo "  cd /home/ubuntu/vps"
 echo "  npm install"
 echo "  sudo systemctl restart panel-vps"

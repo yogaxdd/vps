@@ -352,6 +352,10 @@ async function stopAllInstances() {
 }
 
 // ============ Instance Detail ============
+let usageChart = null;
+let usageInterval = null;
+let envVars = {};
+
 async function openInstanceDetail(id) {
     currentInstance = id;
 
@@ -363,54 +367,260 @@ async function openInstanceDetail(id) {
 
     currentInstanceData = data.instance;
 
+    // Update Pella header
     document.getElementById('instanceDetailName').textContent = id;
+    document.getElementById('serverIdDisplay').value = id;
+    document.getElementById('instanceNameInput').value = currentInstanceData.name || id;
+    document.getElementById('instanceDescInput').value = currentInstanceData.description || '';
+    document.getElementById('instanceMainFile').value = currentInstanceData.mainFile || 'main.py';
+
     document.getElementById('instanceModal').classList.add('active');
 
-    updateInstanceStatus();
-    switchTab('console');
+    updatePellaStatus();
+    switchPellaTab('overview');
     startConsoleRefresh();
+    loadEnvVars();
 }
 
 function closeInstanceDetail() {
     document.getElementById('instanceModal').classList.remove('active');
     stopConsoleRefresh();
+    stopUsageRefresh();
     currentInstance = null;
     currentInstanceData = null;
 }
 
-async function updateInstanceStatus() {
+async function updatePellaStatus() {
     if (!currentInstance) return;
 
     const data = await API.get(`/api/instance/${currentInstance}`);
     if (data.success) {
         currentInstanceData = data.instance;
-        const statusEl = document.getElementById('instanceDetailStatus');
+        const statusEl = document.getElementById('pellaStatus');
         const pm2 = data.pm2 || {};
+        const isRunning = pm2.status === 'online';
 
-        statusEl.className = `status-badge ${pm2.status === 'online' ? 'running' : 'stopped'}`;
-        statusEl.innerHTML = `<span class="status-dot"></span> ${pm2.status === 'online' ? 'Running' : 'Stopped'}`;
+        statusEl.className = `pella-status ${isRunning ? 'running' : 'stopped'}`;
+        statusEl.innerHTML = `<span class="status-dot"></span> ${isRunning ? 'RUNNING' : 'STOPPED'}`;
+
+        // Update RAM usage
+        if (pm2.memory) {
+            document.getElementById('ramUsage').textContent = formatBytes(pm2.memory);
+        }
+        if (pm2.cpu !== undefined) {
+            document.getElementById('cpuUsage').textContent = pm2.cpu.toFixed(1) + '%';
+        }
     }
 }
 
-function switchTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
+function switchPellaTab(tab) {
+    // Update nav items
+    document.querySelectorAll('.pella-nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.tab === tab) {
+            item.classList.add('active');
+        }
+    });
 
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    document.getElementById(`tab${capitalize(tab)}`)?.classList.add('active');
+    // Update tab content
+    document.querySelectorAll('.pella-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(`pellaTab${capitalize(tab)}`)?.classList.add('active');
 
-    if (tab === 'console') {
+    // Load content based on tab
+    if (tab === 'overview') {
         refreshConsole();
+    } else if (tab === 'manage') {
+        loadPackages();
+        initUsageChart();
+        startUsageRefresh();
     } else if (tab === 'files') {
         loadFiles();
-    } else if (tab === 'packages') {
-        loadPackages();
     } else if (tab === 'backups') {
         loadBackups();
-    } else if (tab === 'schedules') {
-        loadInstanceSchedules();
     } else if (tab === 'settings') {
         loadInstanceSettings();
+    }
+}
+
+// Legacy switchTab for backwards compatibility
+function switchTab(tab) {
+    const tabMapping = {
+        'console': 'overview',
+        'packages': 'manage'
+    };
+    switchPellaTab(tabMapping[tab] || tab);
+}
+
+// ============ Usage Chart ============
+function initUsageChart() {
+    const canvas = document.getElementById('usageChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+
+    if (usageChart) {
+        usageChart.destroy();
+    }
+
+    usageChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'CPU',
+                    data: [],
+                    borderColor: '#ff5252',
+                    backgroundColor: 'rgba(255, 82, 82, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'RAM',
+                    data: [],
+                    borderColor: '#00d4ff',
+                    backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    display: false
+                },
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        callback: (value) => value + '%'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function startUsageRefresh() {
+    updateUsageChart();
+    usageInterval = setInterval(updateUsageChart, 3000);
+}
+
+function stopUsageRefresh() {
+    if (usageInterval) {
+        clearInterval(usageInterval);
+        usageInterval = null;
+    }
+}
+
+async function updateUsageChart() {
+    if (!currentInstance || !usageChart) return;
+
+    const data = await API.get(`/api/instance/${currentInstance}`);
+    if (data.success && data.pm2) {
+        const pm2 = data.pm2;
+        const cpu = pm2.cpu || 0;
+        const memory = pm2.memory || 0;
+        const maxMem = (currentInstanceData?.maxMemory || 100) * 1024 * 1024;
+        const ramPercent = Math.min(100, (memory / maxMem) * 100);
+
+        const now = new Date().toLocaleTimeString();
+
+        usageChart.data.labels.push(now);
+        usageChart.data.datasets[0].data.push(cpu);
+        usageChart.data.datasets[1].data.push(ramPercent);
+
+        // Keep only last 20 data points
+        if (usageChart.data.labels.length > 20) {
+            usageChart.data.labels.shift();
+            usageChart.data.datasets[0].data.shift();
+            usageChart.data.datasets[1].data.shift();
+        }
+
+        usageChart.update('none');
+
+        // Update stats display
+        document.getElementById('cpuUsage').textContent = cpu.toFixed(1) + '%';
+        document.getElementById('ramUsage').textContent = formatBytes(memory);
+    }
+}
+
+// ============ Environment Variables ============
+function loadEnvVars() {
+    envVars = currentInstanceData?.envVars || {};
+    renderEnvVars();
+}
+
+function renderEnvVars() {
+    const container = document.getElementById('envVarsList');
+    const header = '<div class="env-var-row env-var-header"><span>Key</span><span>Value</span><span></span></div>';
+
+    const rows = Object.entries(envVars).map(([key, value]) => `
+        <div class="env-var-row">
+            <input type="text" value="${escapeHtml(key)}" readonly>
+            <input type="text" value="${escapeHtml(value)}" data-key="${escapeHtml(key)}">
+            <button class="env-var-remove" onclick="removeEnvVar('${escapeHtml(key)}')">−</button>
+        </div>
+    `).join('');
+
+    container.innerHTML = header + rows;
+}
+
+function addEnvVar() {
+    const keyInput = document.getElementById('newEnvKey');
+    const valueInput = document.getElementById('newEnvValue');
+    const key = keyInput.value.trim();
+    const value = valueInput.value.trim();
+
+    if (!key) {
+        showToast('Key is required', 'error');
+        return;
+    }
+
+    envVars[key] = value;
+    renderEnvVars();
+    keyInput.value = '';
+    valueInput.value = '';
+}
+
+function removeEnvVar(key) {
+    delete envVars[key];
+    renderEnvVars();
+}
+
+async function saveEnvVars() {
+    // Collect current values from inputs
+    document.querySelectorAll('.env-var-row:not(.env-var-header)').forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        if (inputs.length >= 2) {
+            const key = inputs[0].value;
+            const value = inputs[1].value;
+            if (key) {
+                envVars[key] = value;
+            }
+        }
+    });
+
+    const data = await API.put(`/api/instance/${currentInstance}/config`, {
+        envVars: envVars
+    });
+
+    if (data.success) {
+        showToast('Environment variables saved', 'success');
+    } else {
+        showToast(data.error || 'Failed to save', 'error');
     }
 }
 
@@ -1067,24 +1277,74 @@ function setupEventListeners() {
         }
     });
 
-    // Instance Detail
+    // Instance Detail - Pella Layout
     document.getElementById('btnBackToList')?.addEventListener('click', closeInstanceDetail);
 
-    document.getElementById('btnDetailStart')?.addEventListener('click', () => {
-        if (currentInstance) startInstance(currentInstance);
+    // Pella Header Buttons
+    document.getElementById('btnPellaStop')?.addEventListener('click', () => {
+        if (currentInstance) {
+            stopInstance(currentInstance);
+            setTimeout(updatePellaStatus, 500);
+        }
     });
 
-    document.getElementById('btnDetailStop')?.addEventListener('click', () => {
-        if (currentInstance) stopInstance(currentInstance);
+    document.getElementById('btnPellaRestart')?.addEventListener('click', () => {
+        if (currentInstance) {
+            restartInstance(currentInstance);
+            setTimeout(updatePellaStatus, 1000);
+        }
     });
 
-    document.getElementById('btnDetailRestart')?.addEventListener('click', () => {
-        if (currentInstance) restartInstance(currentInstance);
+    document.getElementById('btnPellaDeploy')?.addEventListener('click', () => {
+        showToast('Deploy feature coming soon!', 'info');
     });
 
-    // Tabs
+    // Pella Sidebar Navigation
+    document.querySelectorAll('.pella-nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const tab = item.dataset.tab;
+            if (tab) switchPellaTab(tab);
+        });
+    });
+
+    // Legacy tab buttons (backwards compatibility)
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    // Copy Server ID
+    document.getElementById('btnCopyServerId')?.addEventListener('click', () => {
+        const serverId = document.getElementById('serverIdDisplay').value;
+        navigator.clipboard.writeText(serverId).then(() => {
+            showToast('Server ID copied!', 'success');
+        });
+    });
+
+    // Copy Console
+    document.getElementById('btnCopyConsole')?.addEventListener('click', () => {
+        const output = document.getElementById('consoleOutput').textContent;
+        navigator.clipboard.writeText(output).then(() => {
+            showToast('Console output copied!', 'success');
+        });
+    });
+
+    // Environment Variables
+    document.getElementById('btnAddEnvVar')?.addEventListener('click', addEnvVar);
+    document.getElementById('btnSaveEnvVars')?.addEventListener('click', saveEnvVars);
+    document.getElementById('btnImportEnv')?.addEventListener('click', () => {
+        const envString = prompt('Paste environment variables (KEY=VALUE format, one per line):');
+        if (!envString) return;
+
+        const lines = envString.split('\n');
+        lines.forEach(line => {
+            const [key, ...valueParts] = line.split('=');
+            if (key && valueParts.length > 0) {
+                envVars[key.trim()] = valueParts.join('=').trim();
+            }
+        });
+        renderEnvVars();
+        showToast('Environment variables imported', 'success');
     });
 
     // Console

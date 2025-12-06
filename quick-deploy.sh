@@ -4,7 +4,7 @@
 
 VPS_IP="3.107.81.18"
 VPS_USER="ubuntu"
-VPS_PATH="/home/vps"
+VPS_PATH="/home/ubuntu/vps"
 
 echo "🚀 Deploying to VPS..."
 
@@ -21,7 +21,7 @@ echo ""
 echo "✅ Files uploaded!"
 echo ""
 echo "Jalankan di VPS:"
-echo "  cd /home/vps"
+echo "  cd /home/ubuntu/vps"
 echo "  npm install"
 echo "  npm start"
 echo ""

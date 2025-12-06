@@ -34,13 +34,13 @@ fi
 
 # Create directories
 echo "📁 Creating directories..."
-mkdir -p /home/vps/users
-mkdir -p /home/vps/data
-mkdir -p /home/vps/public
+mkdir -p /home/ubuntu/vps/users
+mkdir -p /home/ubuntu/vps/data
+mkdir -p /home/ubuntu/vps/public
 
 # Install dependencies
 echo "📦 Installing panel dependencies..."
-cd /home/vps
+cd /home/ubuntu/vps
 npm install
 
 # Create systemd service
@@ -53,8 +53,8 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/home/vps
-ExecStart=/usr/bin/node /home/vps/server.js
+WorkingDirectory=/home/ubuntu/vps
+ExecStart=/usr/bin/node /home/ubuntu/vps/server.js
 Restart=always
 RestartSec=10
 StandardOutput=journal

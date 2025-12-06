@@ -1449,4 +1449,514 @@ input[type="range"]::-webkit-slider-thumb {
         margin: 0;
         border-radius: 0;
     }
+
+    .pella-body {
+        flex-direction: column;
+    }
+
+    .pella-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .pella-nav {
+        flex-direction: row;
+        overflow-x: auto;
+    }
+
+    .pella-nav-item {
+        flex-direction: column;
+        padding: 12px 16px;
+        font-size: 11px;
+    }
+
+    .pella-settings-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================ */
+/* Pella-Style Layout                          */
+/* ============================================ */
+
+.pella-layout {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+}
+
+/* Pella Header */
+.pella-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.pella-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pella-header-left h2 {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.pella-expires {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.pella-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.pella-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pella-status.running {
+    background: rgba(0, 230, 118, 0.15);
+    color: var(--success);
+}
+
+.pella-status.stopped {
+    background: rgba(255, 82, 82, 0.15);
+    color: var(--danger);
+}
+
+.pella-status .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Pella Body */
+.pella-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* Pella Sidebar */
+.pella-sidebar {
+    width: 180px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.pella-nav {
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+}
+
+.pella-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.15s ease;
+    margin-bottom: 4px;
+}
+
+.pella-nav-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.pella-nav-item.active {
+    background: rgba(0, 212, 255, 0.1);
+    color: var(--accent);
+}
+
+.pella-nav-icon {
+    font-size: 16px;
+}
+
+/* Pella Content */
+.pella-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.pella-tab {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.pella-tab.active {
+    display: flex;
+}
+
+.pella-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+}
+
+.pella-section-header h3 {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+/* Console in Pella */
+.pella-tab .console-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #0d0d14;
+}
+
+.pella-tab .console-output {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #e0e0e0;
+}
+
+/* Manage Tab Grid */
+.pella-manage-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+.pella-manage-section {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: 1px solid var(--border);
+}
+
+.pella-manage-section:last-child {
+    border-right: none;
+}
+
+.pella-manage-section .pella-section-header {
+    flex-shrink: 0;
+}
+
+.pella-manage-section .dependencies-list,
+.pella-manage-section .package-install {
+    padding: 16px 20px;
+}
+
+.pella-manage-section .dependencies-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Usage Chart */
+.usage-chart-container {
+    padding: 20px;
+    flex: 1;
+    min-height: 200px;
+}
+
+.usage-legend {
+    display: flex;
+    gap: 16px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.legend-dot.cpu {
+    background: var(--danger);
+}
+
+.legend-dot.ram {
+    background: var(--accent);
+}
+
+.usage-stats {
+    display: flex;
+    gap: 24px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-secondary);
+}
+
+.usage-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.usage-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.usage-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Files Tab in Pella */
+.pella-tab .file-manager {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.file-breadcrumb {
+    padding: 10px 20px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+}
+
+.pella-tab .file-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 12px;
+}
+
+/* Backups Tab in Pella */
+.pella-tab .backups-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+}
+
+/* Settings Tab Grid */
+.pella-settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+.pella-settings-section {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: 1px solid var(--border);
+    padding: 20px;
+}
+
+.pella-settings-section:last-child {
+    border-right: none;
+}
+
+.pella-settings-section .setting-item {
+    margin-bottom: 16px;
+}
+
+.pella-settings-section .setting-item label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pella-settings-section .setting-item input,
+.pella-settings-section .setting-item textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.pella-settings-section .setting-item textarea {
+    resize: vertical;
+    font-family: inherit;
+}
+
+.pella-settings-section .setting-item input:focus,
+.pella-settings-section .setting-item textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/* Input with Copy Button */
+.input-with-copy {
+    display: flex;
+    gap: 8px;
+}
+
+.input-with-copy input {
+    flex: 1;
+}
+
+.btn-copy {
+    background: var(--bg-hover);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+}
+
+.btn-copy:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+/* Danger Zone */
+.danger-zone {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.danger-zone h4 {
+    color: var(--danger);
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+.btn-full {
+    width: 100%;
+}
+
+/* Environment Variables */
+.env-vars-list {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    max-height: 300px;
+}
+
+.env-var-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 40px;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+}
+
+.env-var-row.env-var-header {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 12px;
+}
+
+.env-var-row input {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+.env-var-row input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.env-var-remove {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.env-var-remove:hover {
+    background: rgba(255, 82, 82, 0.1);
+    color: var(--danger);
+}
+
+.env-var-add {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.env-var-add input {
+    padding: 10px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+.env-var-add input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.env-var-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
 }

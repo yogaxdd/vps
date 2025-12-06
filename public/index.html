@@ -7,6 +7,7 @@
     <title id="pageTitle">NeuroPanel - Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -421,191 +422,225 @@
         </section>
     </main>
 
-    <!-- Instance Detail Modal (Pterodactyl-like) -->
+    <!-- Instance Detail Modal (Pella-Style) -->
     <div class="modal" id="instanceModal">
         <div class="modal-content modal-fullscreen">
-            <div class="instance-detail">
-                <!-- Instance Header -->
-                <div class="instance-header">
-                    <div class="instance-title">
+            <div class="pella-layout">
+                <!-- Pella Header -->
+                <div class="pella-header">
+                    <div class="pella-header-left">
                         <button class="btn-back" id="btnBackToList">← Back</button>
                         <h2 id="instanceDetailName">Instance</h2>
-                        <span class="status-badge" id="instanceDetailStatus">Stopped</span>
+                        <span class="pella-expires" id="instanceExpires">No expiration</span>
                     </div>
-                    <div class="instance-actions">
-                        <button class="btn btn-success" id="btnDetailStart">▶ Start</button>
-                        <button class="btn btn-warning" id="btnDetailRestart">🔄 Restart</button>
-                        <button class="btn btn-danger" id="btnDetailStop">⏹ Stop</button>
+                    <div class="pella-header-right">
+                        <span class="pella-status running" id="pellaStatus">
+                            <span class="status-dot"></span>
+                            RUNNING
+                        </span>
+                        <button class="btn btn-danger" id="btnPellaStop">⏹ STOP</button>
+                        <button class="btn btn-secondary" id="btnPellaRestart">🔄 RESTART</button>
+                        <button class="btn btn-primary" id="btnPellaDeploy">📦 New Deploy</button>
                     </div>
                 </div>
 
-                <!-- Instance Tabs -->
-                <div class="instance-tabs">
-                    <button class="tab-btn active" data-tab="console">Console</button>
-                    <button class="tab-btn" data-tab="files">Files</button>
-                    <button class="tab-btn" data-tab="packages">Packages</button>
-                    <button class="tab-btn" data-tab="backups">Backups</button>
-                    <button class="tab-btn" data-tab="schedules">Schedules</button>
-                    <button class="tab-btn" data-tab="settings">Settings</button>
-                </div>
+                <!-- Pella Body -->
+                <div class="pella-body">
+                    <!-- Pella Sidebar -->
+                    <div class="pella-sidebar">
+                        <nav class="pella-nav">
+                            <a href="#" class="pella-nav-item active" data-tab="overview">
+                                <span class="pella-nav-icon">📋</span>
+                                Overview
+                            </a>
+                            <a href="#" class="pella-nav-item" data-tab="manage">
+                                <span class="pella-nav-icon">🔧</span>
+                                Manage
+                            </a>
+                            <a href="#" class="pella-nav-item" data-tab="files">
+                                <span class="pella-nav-icon">📁</span>
+                                Files
+                            </a>
+                            <a href="#" class="pella-nav-item" data-tab="backups">
+                                <span class="pella-nav-icon">💾</span>
+                                Backups
+                            </a>
+                            <a href="#" class="pella-nav-item" data-tab="settings">
+                                <span class="pella-nav-icon">⚙️</span>
+                                Settings
+                            </a>
+                        </nav>
+                    </div>
 
-                <!-- Console Tab -->
-                <div class="tab-content active" id="tabConsole">
-                    <div class="console-wrapper">
-                        <div class="console-toolbar">
-                            <span id="consoleStatus">● Connected</span>
-                            <div class="console-btns">
-                                <button class="btn btn-small" id="btnRefreshConsole">🔄 Refresh</button>
-                                <button class="btn btn-small" id="btnClearConsole">🗑️ Clear</button>
+                    <!-- Pella Content -->
+                    <div class="pella-content">
+                        <!-- Overview Tab (Console) -->
+                        <div class="pella-tab active" id="pellaTabOverview">
+                            <div class="pella-section-header">
+                                <h3>CONSOLE</h3>
+                                <button class="btn btn-small" id="btnCopyConsole">📋 Copy</button>
                             </div>
-                        </div>
-                        <div class="console-output" id="consoleOutput"></div>
-                        <div class="console-input-wrapper">
-                            <span class="console-prompt">$</span>
-                            <input type="text" class="console-input" id="consoleInput" placeholder="Enter command...">
-                            <button class="btn btn-small btn-primary" id="btnSendCommand">Send</button>
-                        </div>
-                        <div class="console-info">
-                            <span id="consoleLines">0 lines</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Files Tab -->
-                <div class="tab-content" id="tabFiles">
-                    <div class="file-manager">
-                        <div class="file-toolbar">
-                            <div class="file-path" id="currentPath">/</div>
-                            <div class="file-actions">
-                                <button class="btn btn-small" id="btnNewFile">📄 New File</button>
-                                <button class="btn btn-small" id="btnNewFolder">📁 New Folder</button>
-                                <button class="btn btn-small" id="btnUploadFile">⬆️ Upload</button>
-                                <input type="file" id="fileUploadInput" multiple style="display:none">
-                            </div>
-                        </div>
-                        <div class="file-list" id="fileList">
-                            <!-- Files will be rendered here -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Packages Tab -->
-                <div class="tab-content" id="tabPackages">
-                    <div class="packages-manager">
-                        <!-- Missing Packages Alert -->
-                        <div id="missingPackagesAlert" class="alert alert-warning" style="display: none;">
-                            <strong>⚠️ Missing Packages Detected:</strong>
-                            <div id="missingPackagesList"></div>
-                            <button class="btn btn-small btn-primary" id="btnInstallMissing">Install Missing</button>
-                        </div>
-
-                        <div class="packages-grid">
-                            <div class="package-section">
-                                <h4>📦 Install Packages</h4>
-                                <div class="package-install">
-                                    <input type="text" id="newPackageName"
-                                        placeholder="e.g., axios discord.js selenium">
-                                    <button class="btn btn-primary" id="btnInstallPackage">Install</button>
-                                </div>
-                                <small>Separate multiple packages with spaces</small>
-                            </div>
-
-                            <div class="package-section">
-                                <h4>📋 Installed Dependencies</h4>
-                                <div class="dependencies-list" id="dependenciesList">
-                                    <p class="empty-state">No dependencies</p>
+                            <div class="console-wrapper">
+                                <div class="console-output" id="consoleOutput"></div>
+                                <div class="console-input-wrapper">
+                                    <span class="console-prompt">$</span>
+                                    <input type="text" class="console-input" id="consoleInput"
+                                        placeholder="Enter command...">
+                                    <button class="btn btn-small btn-primary" id="btnSendCommand">Send</button>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="package-file-edit">
-                            <button class="btn btn-secondary" id="btnEditPackageFile">
-                                📝 Edit <span id="packageFileName">package.json</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Backups Tab -->
-                <div class="tab-content" id="tabBackups">
-                    <div class="backups-manager" style="padding: 20px;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h4>💾 Backups</h4>
-                            <button class="btn btn-primary" id="btnCreateBackup">Create Backup</button>
-                        </div>
-                        <div class="backups-list" id="backupsList">
-                            <p class="empty-state">No backups yet</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Schedules Tab -->
-                <div class="tab-content" id="tabSchedules">
-                    <div class="schedules-tab" style="padding: 20px;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h4>⏰ Scheduled Tasks</h4>
-                            <button class="btn btn-primary" id="btnNewInstanceSchedule">Add Schedule</button>
-                        </div>
-                        <div class="instance-schedules-list" id="instanceSchedulesList">
-                            <p class="empty-state">No scheduled tasks for this instance</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Settings Tab -->
-                <div class="tab-content" id="tabSettings">
-                    <div class="instance-settings">
-                        <div class="setting-section">
-                            <h4>⚙️ Instance Configuration</h4>
-                            <div class="setting-item">
-                                <label>Max Memory (MB)</label>
-                                <input type="number" id="instanceMaxMemory" min="50" max="500">
-                            </div>
-                            <div class="setting-item">
-                                <label>Auto Restart</label>
-                                <label class="toggle">
-                                    <input type="checkbox" id="instanceAutoRestart" checked>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="setting-section">
-                            <h4>📄 File Settings</h4>
-                            <div class="setting-item">
-                                <label>Main File (Python: .py, Node: .js)</label>
-                                <input type="text" id="instanceMainFile" placeholder="app.py or app.js">
-                                <small style="color: var(--text-muted);">The entry point file for your bot</small>
-                            </div>
-                            <div class="setting-item">
-                                <label>Requirements File</label>
-                                <input type="text" id="instanceRequirementsFile"
-                                    placeholder="requirements.txt or package.json">
-                                <small style="color: var(--text-muted);">Python: requirements.txt, Node:
-                                    package.json</small>
-                            </div>
-                            <div class="setting-item">
-                                <label>Auto Install Dependencies</label>
-                                <label class="toggle">
-                                    <input type="checkbox" id="instanceAutoInstall" checked>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                                <small style="color: var(--text-muted);">Automatically run pip install / npm install on
-                                    start</small>
-                            </div>
-                            <button class="btn btn-primary" id="btnSaveInstanceSettings">Save Changes</button>
-                        </div>
-
-                        <div class="setting-section danger">
-                            <h4>⚠️ Danger Zone</h4>
-                            <div class="danger-item">
-                                <div>
-                                    <strong>Delete Instance</strong>
-                                    <p>Permanently delete this instance and all its files</p>
+                        <!-- Manage Tab (Packages + Usage) -->
+                        <div class="pella-tab" id="pellaTabManage">
+                            <div class="pella-manage-grid">
+                                <!-- Packages Section -->
+                                <div class="pella-manage-section">
+                                    <div class="pella-section-header">
+                                        <h3>PACKAGES</h3>
+                                        <button class="btn btn-small btn-primary" id="btnAddPackage">+ Add</button>
+                                    </div>
+                                    <div class="package-install" style="margin-bottom: 16px;">
+                                        <input type="text" id="newPackageName" placeholder="e.g., axios discord.js">
+                                        <button class="btn btn-primary" id="btnInstallPackage">Install</button>
+                                    </div>
+                                    <div id="missingPackagesAlert" class="alert alert-warning" style="display: none;">
+                                        <strong>⚠️ Missing Packages:</strong>
+                                        <div id="missingPackagesList"></div>
+                                        <button class="btn btn-small btn-primary" id="btnInstallMissing">Install
+                                            Missing</button>
+                                    </div>
+                                    <div class="dependencies-list" id="dependenciesList">
+                                        <p class="empty-state">No dependencies</p>
+                                    </div>
                                 </div>
-                                <button class="btn btn-danger" id="btnDeleteInstance">Delete Instance</button>
+
+                                <!-- Usage Section -->
+                                <div class="pella-manage-section">
+                                    <div class="pella-section-header">
+                                        <h3>USAGE</h3>
+                                        <div class="usage-legend">
+                                            <span class="legend-item"><span class="legend-dot cpu"></span>CPU</span>
+                                            <span class="legend-item"><span class="legend-dot ram"></span>RAM</span>
+                                        </div>
+                                    </div>
+                                    <div class="usage-chart-container">
+                                        <canvas id="usageChart"></canvas>
+                                    </div>
+                                    <div class="usage-stats">
+                                        <div class="usage-stat">
+                                            <span class="usage-label">CPU</span>
+                                            <span class="usage-value" id="cpuUsage">0%</span>
+                                        </div>
+                                        <div class="usage-stat">
+                                            <span class="usage-label">RAM</span>
+                                            <span class="usage-value" id="ramUsage">0 MB</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Files Tab -->
+                        <div class="pella-tab" id="pellaTabFiles">
+                            <div class="pella-section-header">
+                                <h3>FILE MANAGER</h3>
+                                <div class="file-actions">
+                                    <button class="btn btn-small" id="btnNewFile">📄 New</button>
+                                    <button class="btn btn-small" id="btnNewFolder">📁 Folder</button>
+                                    <button class="btn btn-small" id="btnUploadFile">⬆️ Upload</button>
+                                    <input type="file" id="fileUploadInput" multiple style="display:none">
+                                </div>
+                            </div>
+                            <div class="file-manager">
+                                <div class="file-breadcrumb">
+                                    <span class="file-path" id="currentPath">/</span>
+                                </div>
+                                <div class="file-list" id="fileList">
+                                    <!-- Files will be rendered here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Backups Tab -->
+                        <div class="pella-tab" id="pellaTabBackups">
+                            <div class="pella-section-header">
+                                <h3>BACKUPS</h3>
+                                <button class="btn btn-primary" id="btnCreateBackup">Create Backup</button>
+                            </div>
+                            <div class="backups-list" id="backupsList">
+                                <p class="empty-state">No backups yet</p>
+                            </div>
+                        </div>
+
+                        <!-- Settings Tab -->
+                        <div class="pella-tab" id="pellaTabSettings">
+                            <div class="pella-settings-grid">
+                                <!-- Left Column: Server Settings -->
+                                <div class="pella-settings-section">
+                                    <div class="pella-section-header">
+                                        <h3>SETTINGS</h3>
+                                    </div>
+
+                                    <div class="setting-item">
+                                        <label>Server ID</label>
+                                        <div class="input-with-copy">
+                                            <input type="text" id="serverIdDisplay" readonly>
+                                            <button class="btn-copy" id="btnCopyServerId">📋</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="setting-item">
+                                        <label>Name</label>
+                                        <input type="text" id="instanceNameInput" placeholder="Instance name">
+                                    </div>
+
+                                    <div class="setting-item">
+                                        <label>Description</label>
+                                        <textarea id="instanceDescInput" placeholder="Description (optional)"
+                                            rows="3"></textarea>
+                                    </div>
+
+                                    <div class="setting-item">
+                                        <label>Main File</label>
+                                        <input type="text" id="instanceMainFile" placeholder="main.py">
+                                    </div>
+
+                                    <button class="btn btn-primary" id="btnSaveInstanceSettings"
+                                        style="width: 100%; margin-top: 16px;">SAVE</button>
+
+                                    <div class="danger-zone">
+                                        <h4>DANGER ZONE</h4>
+                                        <button class="btn btn-danger btn-full" id="btnDeleteInstance">DELETE</button>
+                                    </div>
+                                </div>
+
+                                <!-- Right Column: Environment Variables -->
+                                <div class="pella-settings-section">
+                                    <div class="pella-section-header">
+                                        <h3>ENVIRONMENT VARIABLES</h3>
+                                    </div>
+
+                                    <div class="env-vars-list" id="envVarsList">
+                                        <div class="env-var-row env-var-header">
+                                            <span>Key</span>
+                                            <span>Value</span>
+                                            <span></span>
+                                        </div>
+                                        <!-- Env vars will be rendered here -->
+                                    </div>
+
+                                    <div class="env-var-add">
+                                        <input type="text" id="newEnvKey" placeholder="e.g. CLIENT_KEY">
+                                        <input type="text" id="newEnvValue" placeholder="e.g. SECRET">
+                                        <button class="btn btn-small" id="btnAddEnvVar">+ Add</button>
+                                    </div>
+
+                                    <div class="env-var-actions">
+                                        <button class="btn btn-secondary" id="btnImportEnv">📥 Import</button>
+                                        <button class="btn btn-primary" id="btnSaveEnvVars">Save</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
