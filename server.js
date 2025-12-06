@@ -1085,56 +1085,14 @@ app.use((err, req, res, next) => {
 });
 
 // ============ START SERVER ============
+// ============ START SERVER ============
 
-const startServer = () => {
-    const ENABLE_SSL = process.env.ENABLE_SSL === 'true';
-    const HTTPS_PORT = process.env.HTTPS_PORT || 443;
-
-    if (ENABLE_SSL) {
-        const https = require('https');
-        const http = require('http');
-        const sslDir = path.join(__dirname, 'ssl');
-        const certPath = path.join(sslDir, 'cert.pem');
-        const keyPath = path.join(sslDir, 'key.pem');
-
-        if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
-            const options = {
-                key: fs.readFileSync(keyPath),
-                cert: fs.readFileSync(certPath)
-            };
-
-            // HTTPS server
-            https.createServer(options, app).listen(HTTPS_PORT, () => {
-                console.log(`NeuroPanel HTTPS running on port ${HTTPS_PORT}`);
-            });
-
-            // HTTP redirect to HTTPS
-            http.createServer((req, res) => {
-                const host = req.headers.host?.split(':')[0] || 'localhost';
-                res.writeHead(301, { Location: `https://${host}:${HTTPS_PORT}${req.url}` });
-                res.end();
-            }).listen(PORT, () => {
-                console.log(`HTTP redirect on port ${PORT} -> HTTPS ${HTTPS_PORT}`);
-            });
-        } else {
-            console.log('SSL certificates not found. Starting HTTP only...');
-            app.listen(PORT, () => {
-                console.log(`NeuroPanel running on port ${PORT}`);
-            });
-        }
-    } else {
-        app.listen(PORT, () => {
-            console.log(`NeuroPanel running on port ${PORT}`);
-        });
-    }
-
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`NeuroPanel running on http://0.0.0.0:${PORT}`);
     console.log(`cgroups v2 available: ${cgroupManager.isAvailable()}`);
     console.log(`Default login: admin / admin123`);
-    console.log(`Schedules loaded: ${schedulerManager.list().length}`);
 
     if (cgroupManager.isAvailable()) {
         cgroupManager.init();
     }
-};
-
-startServer();
+});
