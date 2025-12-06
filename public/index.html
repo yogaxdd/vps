@@ -4,50 +4,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel VPS - Dashboard</title>
+    <title id="pageTitle">NeuroPanel - Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <h1>Panel<span>VPS</span></h1>
+            <h1 id="panelName">Neuro<span>Panel</span></h1>
+            <small class="version">v1.0.0</small>
         </div>
         <nav class="sidebar-nav">
-            <a href="#" class="nav-item active" data-page="dashboard">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
-                </svg>
-                Dashboard
-            </a>
-            <a href="#" class="nav-item" data-page="instances">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                    <line x1="8" y1="21" x2="16" y2="21"></line>
-                    <line x1="12" y1="17" x2="12" y2="21"></line>
-                </svg>
-                Instances
-            </a>
-            <a href="#" class="nav-item" data-page="users" id="navUsers" style="display: none;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                Users
-            </a>
+            <div class="nav-section">
+                <span class="nav-label">MAIN</span>
+                <a href="#" class="nav-item active" data-page="dashboard">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="#" class="nav-item" data-page="instances">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    Instances
+                    <span class="nav-badge" id="instanceCount">0</span>
+                </a>
+                <a href="#" class="nav-item" data-page="schedules">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Schedules
+                </a>
+            </div>
+            <div class="nav-section">
+                <span class="nav-label">MANAGEMENT</span>
+                <a href="#" class="nav-item" data-page="users" id="navUsers" style="display: none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Users
+                </a>
+                <a href="#" class="nav-item" data-page="apikeys">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4">
+                        </path>
+                    </svg>
+                    API Keys
+                </a>
+                <a href="#" class="nav-item" data-page="settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                        </path>
+                    </svg>
+                    Settings
+                </a>
+            </div>
         </nav>
         <div class="sidebar-footer">
             <div class="user-info">
-                <span id="currentUser">admin</span>
-                <small id="currentRole">admin</small>
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div class="user-details">
+                    <span id="currentUser">admin</span>
+                    <small id="currentRole">Administrator</small>
+                </div>
             </div>
-            <button class="btn-logout" id="btnLogout">Logout</button>
+            <button class="btn-logout" id="btnLogout">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                Sign Out
+            </button>
         </div>
     </aside>
 
@@ -56,9 +99,16 @@
         <!-- Header -->
         <header class="header">
             <button class="menu-toggle" id="menuToggle">☰</button>
-            <h2 id="pageTitle">Dashboard</h2>
+            <h2 id="pageTitleHeader">Dashboard</h2>
             <div class="header-actions">
-                <button class="btn btn-primary" id="btnNewInstance">+ New Instance</button>
+                <button class="btn btn-primary" id="btnNewInstance">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="width:16px;height:16px;margin-right:6px;">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    New Instance
+                </button>
             </div>
         </header>
 
@@ -66,7 +116,7 @@
         <section class="page active" id="pageDashboard">
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #00d4ff, #0099cc);">
+                    <div class="stat-icon blue">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <rect x="2" y="3" width="20" height="14" rx="2"></rect>
                             <line x1="8" y1="21" x2="16" y2="21"></line>
@@ -79,7 +129,7 @@
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #00e676, #00c853);">
+                    <div class="stat-icon green">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polygon points="5 3 19 12 5 21 5 3"></polygon>
                         </svg>
@@ -90,7 +140,7 @@
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #ff5252, #d32f2f);">
+                    <div class="stat-icon red">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <rect x="6" y="4" width="12" height="16"></rect>
                         </svg>
@@ -101,7 +151,7 @@
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #ffab00, #ff8f00);">
+                    <div class="stat-icon orange">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path
                                 d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
@@ -115,13 +165,40 @@
                 </div>
             </div>
 
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h3>Quick Actions</h3>
+                <div class="action-grid">
+                    <button class="action-card" onclick="document.getElementById('btnNewInstance').click()">
+                        <div class="action-icon blue">➕</div>
+                        <span>New Instance</span>
+                    </button>
+                    <button class="action-card" onclick="navigateTo('instances')">
+                        <div class="action-icon green">📋</div>
+                        <span>View All</span>
+                    </button>
+                    <button class="action-card" onclick="startAllInstances()">
+                        <div class="action-icon purple">▶️</div>
+                        <span>Start All</span>
+                    </button>
+                    <button class="action-card" onclick="stopAllInstances()">
+                        <div class="action-icon red">⏹️</div>
+                        <span>Stop All</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- All Instances Grid -->
             <div class="card">
                 <div class="card-header">
-                    <h3>Recent Instances</h3>
+                    <h3>All Instances</h3>
+                    <div class="card-actions">
+                        <input type="text" class="search-input" placeholder="Search..." id="dashboardSearch">
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="instances-list" id="recentInstances">
-                        <p class="empty-state">No instances yet</p>
+                    <div class="instances-grid" id="allInstancesGrid">
+                        <p class="empty-state">No instances yet. Click "New Instance" to create one.</p>
                     </div>
                 </div>
             </div>
@@ -132,7 +209,19 @@
             <div class="card">
                 <div class="card-header">
                     <h3>All Instances</h3>
-                    <input type="text" class="search-input" placeholder="Search..." id="searchInstances">
+                    <div class="card-actions">
+                        <select id="filterRuntime" class="filter-select">
+                            <option value="">All Runtimes</option>
+                            <option value="node">NodeJS</option>
+                            <option value="python">Python</option>
+                        </select>
+                        <select id="filterStatus" class="filter-select">
+                            <option value="">All Status</option>
+                            <option value="online">Running</option>
+                            <option value="stopped">Stopped</option>
+                        </select>
+                        <input type="text" class="search-input" placeholder="Search..." id="searchInstances">
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="instances-table" id="instancesTable">
@@ -143,6 +232,7 @@
                                     <th>Runtime</th>
                                     <th>Memory</th>
                                     <th>Status</th>
+                                    <th>Created</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -154,7 +244,7 @@
             </div>
         </section>
 
-        <!-- Users Page (Admin only) -->
+        <!-- Users Page -->
         <section class="page" id="pageUsers">
             <div class="card">
                 <div class="card-header">
@@ -177,25 +267,340 @@
                 </div>
             </div>
         </section>
-    </main>
 
-    <!-- Console Modal -->
-    <div class="modal" id="consoleModal">
-        <div class="modal-content modal-large">
-            <div class="modal-header">
-                <h3>Console - <span id="consoleTitle">instance</span></h3>
-                <div class="console-actions">
-                    <button class="btn btn-small" id="btnClearConsole">Clear</button>
-                    <button class="btn btn-small" id="btnRefreshConsole">Refresh</button>
-                    <button class="modal-close" id="closeConsole">&times;</button>
+        <!-- Schedules Page -->
+        <section class="page" id="pageSchedules">
+            <div class="card">
+                <div class="card-header">
+                    <h3>⏰ Task Scheduler</h3>
+                    <button class="btn btn-primary" id="btnNewSchedule">+ New Schedule</button>
+                </div>
+                <div class="card-body">
+                    <div class="schedules-list" id="schedulesList">
+                        <p class="empty-state">No scheduled tasks. Click "New Schedule" to create one.</p>
+                    </div>
                 </div>
             </div>
-            <div class="console-container">
-                <div class="console-output" id="consoleOutput"></div>
+        </section>
+
+        <!-- API Keys Page -->
+        <section class="page" id="PageApikeys">
+            <div class="card">
+                <div class="card-header">
+                    <h3>🔑 API Keys</h3>
+                    <button class="btn btn-primary" id="btnNewApiKey">+ New API Key</button>
+                </div>
+                <div class="card-body">
+                    <div class="api-info"
+                        style="margin-bottom: 20px; padding: 16px; background: rgba(0,212,255,0.1); border-radius: 8px;">
+                        <p><strong>API Endpoint:</strong> <code id="apiEndpoint">https://your-domain.com/api</code></p>
+                        <p style="margin-top: 8px; color: var(--text-muted); font-size: 13px;">
+                            Use API keys to authenticate requests. Include in header:
+                            <code>Authorization: Bearer YOUR_API_KEY</code>
+                        </p>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Key Prefix</th>
+                                <th>Last Used</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="apiKeysBody">
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="console-status">
-                <span id="consoleStatus">Disconnected</span>
-                <span id="consoleLines">0 lines</span>
+        </section>
+
+        <!-- Settings Page -->
+        <section class="page" id="pageSettings">
+            <div class="settings-grid">
+                <!-- Panel Settings -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🎨 Panel Settings</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="setting-item">
+                            <label>Panel Name</label>
+                            <input type="text" id="settingPanelName" value="NeuroPanel" placeholder="Panel Name">
+                            <small>The name displayed in sidebar and title</small>
+                        </div>
+                        <div class="setting-item">
+                            <label>Accent Color</label>
+                            <div class="color-options">
+                                <button class="color-btn active" data-color="#00d4ff"
+                                    style="background:#00d4ff"></button>
+                                <button class="color-btn" data-color="#00e676" style="background:#00e676"></button>
+                                <button class="color-btn" data-color="#ff5252" style="background:#ff5252"></button>
+                                <button class="color-btn" data-color="#ffab00" style="background:#ffab00"></button>
+                                <button class="color-btn" data-color="#7c4dff" style="background:#7c4dff"></button>
+                                <button class="color-btn" data-color="#e91e63" style="background:#e91e63"></button>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="btnSaveSettings">Save Settings</button>
+                    </div>
+                </div>
+
+                <!-- Account Settings -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>👤 Account Settings</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="setting-item">
+                            <label>Current Password</label>
+                            <input type="password" id="currentPassword" placeholder="Current password">
+                        </div>
+                        <div class="setting-item">
+                            <label>New Password</label>
+                            <input type="password" id="newPassword" placeholder="New password">
+                        </div>
+                        <div class="setting-item">
+                            <label>Confirm Password</label>
+                            <input type="password" id="confirmPassword" placeholder="Confirm new password">
+                        </div>
+                        <button class="btn btn-primary" id="btnChangePassword">Change Password</button>
+                    </div>
+                </div>
+
+                <!-- System Info -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📊 System Info</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="system-info">
+                            <div class="info-row">
+                                <span>Panel Version</span>
+                                <span>v1.0.0</span>
+                            </div>
+                            <div class="info-row">
+                                <span>Node.js</span>
+                                <span id="infoNodeVersion">Loading...</span>
+                            </div>
+                            <div class="info-row">
+                                <span>PM2 Status</span>
+                                <span class="status-badge running">Active</span>
+                            </div>
+                            <div class="info-row">
+                                <span>cgroups</span>
+                                <span id="infoCgroups">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="card danger-card">
+                    <div class="card-header">
+                        <h3>⚠️ Danger Zone</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="danger-item">
+                            <div>
+                                <strong>Stop All Instances</strong>
+                                <p>Stop all running bot instances</p>
+                            </div>
+                            <button class="btn btn-danger" onclick="stopAllInstances()">Stop All</button>
+                        </div>
+                        <div class="danger-item">
+                            <div>
+                                <strong>Restart Panel</strong>
+                                <p>Restart the panel service</p>
+                            </div>
+                            <button class="btn btn-danger" onclick="restartPanel()">Restart</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Instance Detail Modal (Pterodactyl-like) -->
+    <div class="modal" id="instanceModal">
+        <div class="modal-content modal-fullscreen">
+            <div class="instance-detail">
+                <!-- Instance Header -->
+                <div class="instance-header">
+                    <div class="instance-title">
+                        <button class="btn-back" id="btnBackToList">← Back</button>
+                        <h2 id="instanceDetailName">Instance</h2>
+                        <span class="status-badge" id="instanceDetailStatus">Stopped</span>
+                    </div>
+                    <div class="instance-actions">
+                        <button class="btn btn-success" id="btnDetailStart">▶ Start</button>
+                        <button class="btn btn-warning" id="btnDetailRestart">🔄 Restart</button>
+                        <button class="btn btn-danger" id="btnDetailStop">⏹ Stop</button>
+                    </div>
+                </div>
+
+                <!-- Instance Tabs -->
+                <div class="instance-tabs">
+                    <button class="tab-btn active" data-tab="console">Console</button>
+                    <button class="tab-btn" data-tab="files">Files</button>
+                    <button class="tab-btn" data-tab="packages">Packages</button>
+                    <button class="tab-btn" data-tab="backups">Backups</button>
+                    <button class="tab-btn" data-tab="schedules">Schedules</button>
+                    <button class="tab-btn" data-tab="settings">Settings</button>
+                </div>
+
+                <!-- Console Tab -->
+                <div class="tab-content active" id="tabConsole">
+                    <div class="console-wrapper">
+                        <div class="console-toolbar">
+                            <span id="consoleStatus">● Connected</span>
+                            <div class="console-btns">
+                                <button class="btn btn-small" id="btnRefreshConsole">🔄 Refresh</button>
+                                <button class="btn btn-small" id="btnClearConsole">🗑️ Clear</button>
+                            </div>
+                        </div>
+                        <div class="console-output" id="consoleOutput"></div>
+                        <div class="console-input-wrapper">
+                            <span class="console-prompt">$</span>
+                            <input type="text" class="console-input" id="consoleInput" placeholder="Enter command...">
+                            <button class="btn btn-small btn-primary" id="btnSendCommand">Send</button>
+                        </div>
+                        <div class="console-info">
+                            <span id="consoleLines">0 lines</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Files Tab -->
+                <div class="tab-content" id="tabFiles">
+                    <div class="file-manager">
+                        <div class="file-toolbar">
+                            <div class="file-path" id="currentPath">/</div>
+                            <div class="file-actions">
+                                <button class="btn btn-small" id="btnNewFile">📄 New File</button>
+                                <button class="btn btn-small" id="btnNewFolder">📁 New Folder</button>
+                                <button class="btn btn-small" id="btnUploadFile">⬆️ Upload</button>
+                                <input type="file" id="fileUploadInput" multiple style="display:none">
+                            </div>
+                        </div>
+                        <div class="file-list" id="fileList">
+                            <!-- Files will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Packages Tab -->
+                <div class="tab-content" id="tabPackages">
+                    <div class="packages-manager">
+                        <!-- Missing Packages Alert -->
+                        <div id="missingPackagesAlert" class="alert alert-warning" style="display: none;">
+                            <strong>⚠️ Missing Packages Detected:</strong>
+                            <div id="missingPackagesList"></div>
+                            <button class="btn btn-small btn-primary" id="btnInstallMissing">Install Missing</button>
+                        </div>
+
+                        <div class="packages-grid">
+                            <div class="package-section">
+                                <h4>📦 Install Packages</h4>
+                                <div class="package-install">
+                                    <input type="text" id="newPackageName"
+                                        placeholder="e.g., axios discord.js selenium">
+                                    <button class="btn btn-primary" id="btnInstallPackage">Install</button>
+                                </div>
+                                <small>Separate multiple packages with spaces</small>
+                            </div>
+
+                            <div class="package-section">
+                                <h4>📋 Installed Dependencies</h4>
+                                <div class="dependencies-list" id="dependenciesList">
+                                    <p class="empty-state">No dependencies</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="package-file-edit">
+                            <button class="btn btn-secondary" id="btnEditPackageFile">
+                                📝 Edit <span id="packageFileName">package.json</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Backups Tab -->
+                <div class="tab-content" id="tabBackups">
+                    <div class="backups-manager" style="padding: 20px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h4>💾 Backups</h4>
+                            <button class="btn btn-primary" id="btnCreateBackup">Create Backup</button>
+                        </div>
+                        <div class="backups-list" id="backupsList">
+                            <p class="empty-state">No backups yet</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schedules Tab -->
+                <div class="tab-content" id="tabSchedules">
+                    <div class="schedules-tab" style="padding: 20px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h4>⏰ Scheduled Tasks</h4>
+                            <button class="btn btn-primary" id="btnNewInstanceSchedule">Add Schedule</button>
+                        </div>
+                        <div class="instance-schedules-list" id="instanceSchedulesList">
+                            <p class="empty-state">No scheduled tasks for this instance</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div class="tab-content" id="tabSettings">
+                    <div class="instance-settings">
+                        <div class="setting-section">
+                            <h4>⚙️ Instance Configuration</h4>
+                            <div class="setting-item">
+                                <label>Max Memory (MB)</label>
+                                <input type="number" id="instanceMaxMemory" min="50" max="500">
+                            </div>
+                            <div class="setting-item">
+                                <label>Auto Restart</label>
+                                <label class="toggle">
+                                    <input type="checkbox" id="instanceAutoRestart" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <button class="btn btn-primary" id="btnSaveInstanceSettings">Save Changes</button>
+                        </div>
+
+                        <div class="setting-section danger">
+                            <h4>⚠️ Danger Zone</h4>
+                            <div class="danger-item">
+                                <div>
+                                    <strong>Delete Instance</strong>
+                                    <p>Permanently delete this instance and all its files</p>
+                                </div>
+                                <button class="btn btn-danger" id="btnDeleteInstance">Delete Instance</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Editor Modal -->
+    <div class="modal" id="fileEditorModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>📝 <span id="fileEditorTitle">file.js</span></h3>
+                <div class="modal-actions">
+                    <button class="btn btn-small btn-primary" id="saveFileEditor">💾 Save</button>
+                    <button class="modal-close" id="closeFileEditor">&times;</button>
+                </div>
+            </div>
+            <div class="file-editor-container">
+                <textarea id="fileEditorContent" spellcheck="false"></textarea>
             </div>
         </div>
     </div>
@@ -204,7 +609,7 @@
     <div class="modal" id="newInstanceModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Create New Instance</h3>
+                <h3>🆕 Create New Instance</h3>
                 <button class="modal-close" id="closeNewInstance">&times;</button>
             </div>
             <form id="newInstanceForm">
@@ -215,18 +620,31 @@
                 </div>
                 <div class="form-group">
                     <label>Runtime</label>
-                    <select id="newInstanceRuntime">
-                        <option value="node">NodeJS</option>
-                        <option value="python">Python</option>
-                    </select>
+                    <div class="runtime-select">
+                        <label class="runtime-option">
+                            <input type="radio" name="runtime" value="node" checked>
+                            <div class="runtime-card">
+                                <span class="runtime-icon">🟢</span>
+                                <span>NodeJS</span>
+                            </div>
+                        </label>
+                        <label class="runtime-option">
+                            <input type="radio" name="runtime" value="python">
+                            <div class="runtime-card">
+                                <span class="runtime-icon">🐍</span>
+                                <span>Python</span>
+                            </div>
+                        </label>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Max Memory (MB)</label>
-                    <input type="number" id="newInstanceMemory" value="100" min="50" max="500">
+                    <input type="range" id="newInstanceMemory" value="100" min="50" max="500" step="10">
+                    <div class="range-value"><span id="memoryValue">100</span> MB</div>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" id="cancelNewInstance">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create</button>
+                    <button type="submit" class="btn btn-primary">Create Instance</button>
                 </div>
             </form>
         </div>
@@ -236,7 +654,7 @@
     <div class="modal" id="newUserModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Create New User</h3>
+                <h3>👤 Create New User</h3>
                 <button class="modal-close" id="closeNewUser">&times;</button>
             </div>
             <form id="newUserForm">
@@ -263,78 +681,23 @@
         </div>
     </div>
 
-    <!-- File Editor Modal -->
-    <div class="modal" id="fileEditorModal">
-        <div class="modal-content modal-large">
+    <!-- New File Modal -->
+    <div class="modal" id="newFileModal">
+        <div class="modal-content modal-small">
             <div class="modal-header">
-                <h3>Edit File - <span id="fileEditorTitle">file.js</span></h3>
-                <button class="modal-close" id="closeFileEditor">&times;</button>
+                <h3>📄 New File</h3>
+                <button class="modal-close" id="closeNewFile">&times;</button>
             </div>
-            <div class="file-editor-container">
-                <textarea id="fileEditorContent" spellcheck="false"></textarea>
-            </div>
-            <div class="form-actions">
-                <button class="btn btn-secondary" id="cancelFileEditor">Cancel</button>
-                <button class="btn btn-primary" id="saveFileEditor">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Package Manager Modal -->
-    <div class="modal" id="packageModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>📦 Packages - <span id="packageTitle">instance</span></h3>
-                <button class="modal-close" id="closePackage">&times;</button>
-            </div>
-            <div class="package-container" style="padding: 20px;">
-                <!-- Missing Packages Alert -->
-                <div id="missingPackagesAlert" class="alert alert-warning"
-                    style="display: none; background: rgba(255,171,0,0.15); border: 1px solid rgba(255,171,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-                    <strong>⚠️ Missing Packages Detected:</strong>
-                    <div id="missingPackagesList" style="margin-top: 8px; font-family: monospace;"></div>
-                    <button class="btn btn-small btn-primary" id="btnInstallMissing" style="margin-top: 10px;">Install
-                        Missing</button>
+            <form id="newFileForm">
+                <div class="form-group">
+                    <label>File Name</label>
+                    <input type="text" id="newFileName" placeholder="example.js" required>
                 </div>
-
-                <!-- Runtime Info -->
-                <div style="margin-bottom: 16px;">
-                    <span id="packageRuntime" class="runtime-badge">node</span>
-                    <span id="packageFile" style="color: var(--text-muted); margin-left: 8px;">package.json</span>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelNewFile">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
                 </div>
-
-                <!-- Installed Dependencies -->
-                <div style="margin-bottom: 16px;">
-                    <h4 style="margin-bottom: 10px; color: var(--text-secondary);">Installed Dependencies</h4>
-                    <div id="dependenciesList"
-                        style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 12px; max-height: 150px; overflow-y: auto; font-family: monospace; font-size: 13px;">
-                        <p style="color: var(--text-muted);">No dependencies</p>
-                    </div>
-                </div>
-
-                <!-- Install New Package -->
-                <div style="margin-bottom: 16px;">
-                    <h4 style="margin-bottom: 10px; color: var(--text-secondary);">Install Package</h4>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="newPackageName" placeholder="e.g., axios, discord.js, selenium"
-                            style="flex: 1; padding: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--border); border-radius: 8px; color: #fff;">
-                        <button class="btn btn-primary" id="btnInstallPackage">Install</button>
-                    </div>
-                    <small style="color: var(--text-muted); display: block; margin-top: 6px;">Separate multiple packages
-                        with spaces</small>
-                </div>
-
-                <!-- Edit package.json / requirements.txt -->
-                <div>
-                    <button class="btn btn-secondary" id="btnEditPackageFile" style="width: 100%;">
-                        📝 Edit <span id="packageFileBtn">package.json</span>
-                    </button>
-                </div>
-            </div>
-            <div class="package-status"
-                style="padding: 10px 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted);">
-                <span id="packageStatus">Ready</span>
-            </div>
+            </form>
         </div>
     </div>
 

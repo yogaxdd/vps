@@ -9,6 +9,9 @@ const cgroupManager = require('./lib/cgroupManager');
 const instanceManager = require('./lib/instanceManager');
 const logManager = require('./lib/logManager');
 const authManager = require('./lib/authManager');
+const resourceManager = require('./lib/resourceManager');
+const schedulerManager = require('./lib/schedulerManager');
+const permissionManager = require('./lib/permissionManager');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -562,14 +565,481 @@ app.put('/api/users/:username/password', authManager.authMiddleware, (req, res) 
     }
 });
 
+// ============ RESOURCE MONITORING ============
+
+// Get system resources
+app.get('/api/system/resources', authManager.authMiddleware, async (req, res) => {
+    try {
+        const system = resourceManager.getSystemResources();
+        const disk = await resourceManager.getDiskUsage();
+        const instances = await resourceManager.getAllInstancesResources();
+
+        res.json({
+            success: true,
+            system,
+            disk,
+            instances
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Get instance resources
+app.get('/api/instance/:id/resources', authManager.authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const resources = await resourceManager.getInstanceResources(id);
+        const diskUsage = await resourceManager.getInstanceDiskUsage(id);
+
+        res.json({
+            success: true,
+            resources,
+            diskUsage
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ============ CONSOLE INPUT ============
+
+// Send command to instance console
+app.post('/api/instance/:id/console/input', authManager.authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { command } = req.body;
+
+        if (!command) {
+            return res.status(400).json({ success: false, error: 'Command required' });
+        }
+
+        // Log the command
+        logManager.append(id, `> ${command}`);
+        res.json({
+            success: true,
+            message: 'Command logged',
+            note: 'Command added to log. For interactive execution, bot must read from stdin.'
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ============ TASK SCHEDULER ============
+
+// Get all schedules
+app.get('/api/schedules', authManager.authMiddleware, (req, res) => {
+    try {
+        const schedules = schedulerManager.list();
+        res.json({ success: true, schedules });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Get schedules for an instance
+app.get('/api/instance/:id/schedules', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const schedules = schedulerManager.list(id);
+        res.json({ success: true, schedules });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Create schedule
+app.post('/api/instance/:id/schedules', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, action, command, cronExpression, enabled } = req.body;
+
+        if (!action || !cronExpression) {
+            return res.status(400).json({ success: false, error: 'Action and cronExpression required' });
+        }
+
+        const schedule = schedulerManager.create({
+            instanceId: id,
+            name,
+            action,
+            command,
+            cronExpression,
+            enabled
+        });
+
+        res.json({ success: true, schedule });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Update schedule
+app.put('/api/schedules/:scheduleId', authManager.authMiddleware, (req, res) => {
+    try {
+        const { scheduleId } = req.params;
+        const schedule = schedulerManager.update(scheduleId, req.body);
+
+        if (!schedule) {
+            return res.status(404).json({ success: false, error: 'Schedule not found' });
+        }
+
+        res.json({ success: true, schedule });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Delete schedule
+app.delete('/api/schedules/:scheduleId', authManager.authMiddleware, (req, res) => {
+    try {
+        const { scheduleId } = req.params;
+        schedulerManager.delete(scheduleId);
+        res.json({ success: true, message: 'Schedule deleted' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Toggle schedule
+app.post('/api/schedules/:scheduleId/toggle', authManager.authMiddleware, (req, res) => {
+    try {
+        const { scheduleId } = req.params;
+        const schedule = schedulerManager.toggle(scheduleId);
+
+        if (!schedule) {
+            return res.status(404).json({ success: false, error: 'Schedule not found' });
+        }
+
+        res.json({ success: true, schedule });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Run schedule now
+app.post('/api/schedules/:scheduleId/run', authManager.authMiddleware, async (req, res) => {
+    try {
+        const { scheduleId } = req.params;
+        const success = await schedulerManager.runNow(scheduleId);
+
+        if (!success) {
+            return res.status(404).json({ success: false, error: 'Schedule not found' });
+        }
+
+        res.json({ success: true, message: 'Schedule executed' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ============ PERMISSIONS & SUBUSERS ============
+
+// Get available permissions
+app.get('/api/permissions', authManager.authMiddleware, (req, res) => {
+    try {
+        res.json({
+            success: true,
+            permissions: permissionManager.getPermissionsList(),
+            presets: permissionManager.getPresets()
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Get subusers for an instance
+app.get('/api/instance/:id/subusers', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const subusers = permissionManager.getSubusers(id);
+        res.json({ success: true, subusers });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Create subuser
+app.post('/api/instance/:id/subusers', authManager.authMiddleware, authManager.adminMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const { username, permissions } = req.body;
+
+        if (!username) {
+            return res.status(400).json({ success: false, error: 'Username required' });
+        }
+
+        const subuser = permissionManager.createSubuser(id, username, permissions || []);
+        res.json({ success: true, subuser });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Update subuser permissions
+app.put('/api/subusers/:subuserId', authManager.authMiddleware, authManager.adminMiddleware, (req, res) => {
+    try {
+        const { subuserId } = req.params;
+        const { permissions, preset } = req.body;
+
+        let subuser;
+        if (preset) {
+            subuser = permissionManager.applyPreset(subuserId, preset);
+        } else if (permissions) {
+            subuser = permissionManager.updateSubuserPermissions(subuserId, permissions);
+        }
+
+        if (!subuser) {
+            return res.status(404).json({ success: false, error: 'Subuser not found' });
+        }
+
+        res.json({ success: true, subuser });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Delete subuser
+app.delete('/api/subusers/:subuserId', authManager.authMiddleware, authManager.adminMiddleware, (req, res) => {
+    try {
+        const { subuserId } = req.params;
+        permissionManager.deleteSubuser(subuserId);
+        res.json({ success: true, message: 'Subuser deleted' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Get user permissions for an instance
+app.get('/api/instance/:id/my-permissions', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const permissions = permissionManager.getUserPermissions(req.user.username, id);
+        res.json({ success: true, permissions });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ============ API KEYS ============
+
+// Get user's API keys
+app.get('/api/apikeys', authManager.authMiddleware, (req, res) => {
+    try {
+        const keys = permissionManager.getUserApiKeys(req.user.username);
+        res.json({ success: true, keys });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Create API key
+app.post('/api/apikeys', authManager.authMiddleware, (req, res) => {
+    try {
+        const { name, permissions } = req.body;
+
+        if (!name) {
+            return res.status(400).json({ success: false, error: 'Name required' });
+        }
+
+        const apiKey = permissionManager.createApiKey(req.user.username, name, permissions || []);
+        res.json({ success: true, apiKey });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Delete API key
+app.delete('/api/apikeys/:keyId', authManager.authMiddleware, (req, res) => {
+    try {
+        const { keyId } = req.params;
+        permissionManager.deleteApiKey(keyId);
+        res.json({ success: true, message: 'API key deleted' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ============ FILE MANAGEMENT EXTENDED ============
+
+// Delete file
+app.delete('/api/instance/:id/file/:filename', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id, filename } = req.params;
+        const userDir = instanceManager.getUserDir(id);
+        const filePath = path.join(userDir, filename);
+
+        if (!filePath.startsWith(userDir)) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ success: false, error: 'File not found' });
+        }
+
+        const stat = fs.statSync(filePath);
+        if (stat.isDirectory()) {
+            fs.rmdirSync(filePath, { recursive: true });
+        } else {
+            fs.unlinkSync(filePath);
+        }
+
+        logManager.append(id, `File deleted: ${filename}`);
+        res.json({ success: true, message: 'File deleted' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Create folder
+app.post('/api/instance/:id/folder', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+        const userDir = instanceManager.getUserDir(id);
+        const folderPath = path.join(userDir, name);
+
+        if (!folderPath.startsWith(userDir)) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+
+        fs.mkdirSync(folderPath, { recursive: true });
+        logManager.append(id, `Folder created: ${name}`);
+        res.json({ success: true, message: 'Folder created' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Download file
+app.get('/api/instance/:id/download/:filename', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id, filename } = req.params;
+        const userDir = instanceManager.getUserDir(id);
+        const filePath = path.join(userDir, filename);
+
+        if (!filePath.startsWith(userDir)) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ success: false, error: 'File not found' });
+        }
+
+        res.download(filePath, filename);
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ============ BACKUPS ============
+
+// List backups
+app.get('/api/instance/:id/backups', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const backupDir = path.join(instanceManager.BASE_DIR, 'backups', id);
+
+        if (!fs.existsSync(backupDir)) {
+            return res.json({ success: true, backups: [] });
+        }
+
+        const backups = fs.readdirSync(backupDir)
+            .filter(f => f.endsWith('.tar.gz'))
+            .map(f => {
+                const stat = fs.statSync(path.join(backupDir, f));
+                return {
+                    name: f,
+                    size: stat.size,
+                    createdAt: stat.birthtime
+                };
+            })
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        res.json({ success: true, backups });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Create backup
+app.post('/api/instance/:id/backups', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const userDir = instanceManager.getUserDir(id);
+        const backupDir = path.join(instanceManager.BASE_DIR, 'backups', id);
+        const backupName = `backup-${Date.now()}.tar.gz`;
+
+        if (!fs.existsSync(backupDir)) {
+            fs.mkdirSync(backupDir, { recursive: true });
+        }
+
+        const { exec } = require('child_process');
+        exec(`tar -czf "${path.join(backupDir, backupName)}" -C "${userDir}" .`, (error) => {
+            if (error) {
+                return res.status(500).json({ success: false, error: error.message });
+            }
+
+            logManager.append(id, `Backup created: ${backupName}`);
+            res.json({ success: true, message: 'Backup created', name: backupName });
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Restore backup
+app.post('/api/instance/:id/backups/:backupName/restore', authManager.authMiddleware, async (req, res) => {
+    try {
+        const { id, backupName } = req.params;
+        const userDir = instanceManager.getUserDir(id);
+        const backupPath = path.join(instanceManager.BASE_DIR, 'backups', id, backupName);
+
+        if (!fs.existsSync(backupPath)) {
+            return res.status(404).json({ success: false, error: 'Backup not found' });
+        }
+
+        try {
+            await pm2Manager.stopProcess(id);
+        } catch (e) { }
+
+        const { exec } = require('child_process');
+        exec(`tar -xzf "${backupPath}" -C "${userDir}"`, (error) => {
+            if (error) {
+                return res.status(500).json({ success: false, error: error.message });
+            }
+
+            logManager.append(id, `Backup restored: ${backupName}`);
+            res.json({ success: true, message: 'Backup restored' });
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Delete backup
+app.delete('/api/instance/:id/backups/:backupName', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id, backupName } = req.params;
+        const backupPath = path.join(instanceManager.BASE_DIR, 'backups', id, backupName);
+
+        if (!fs.existsSync(backupPath)) {
+            return res.status(404).json({ success: false, error: 'Backup not found' });
+        }
+
+        fs.unlinkSync(backupPath);
+        res.json({ success: true, message: 'Backup deleted' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // ============ CATCH-ALL FOR SPA ============
 
 app.get('*', (req, res) => {
-    // If requesting API, return 404
     if (req.path.startsWith('/api/')) {
         return res.status(404).json({ success: false, error: 'Not found' });
     }
-    // Otherwise serve index.html
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
@@ -583,9 +1053,10 @@ app.use((err, req, res, next) => {
 // ============ START SERVER ============
 
 app.listen(PORT, () => {
-    console.log(`Panel VPS running on port ${PORT}`);
+    console.log(`NeuroPanel running on port ${PORT}`);
     console.log(`cgroups v2 available: ${cgroupManager.isAvailable()}`);
     console.log(`Default login: admin / admin123`);
+    console.log(`Schedules loaded: ${schedulerManager.list().length}`);
 
     if (cgroupManager.isAvailable()) {
         cgroupManager.init();
