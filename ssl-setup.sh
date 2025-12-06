@@ -5,9 +5,6 @@
 set -e
 
 PANEL_DIR="/home/panel"
-DOMAIN=""
-EMAIL=""
-SSL_TYPE=""
 
 echo "========================================"
 echo "   NeuroPanel SSL Setup"
@@ -73,22 +70,11 @@ if [ "$SSL_TYPE" == "letsencrypt" ]; then
     # Copy certificates
     cp "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" "$PANEL_DIR/ssl/cert.pem"
     cp "/etc/letsencrypt/live/$DOMAIN/privkey.pem" "$PANEL_DIR/ssl/key.pem"
-    chown -R panel:panel "$PANEL_DIR/ssl"
+    chown -R root:root "$PANEL_DIR/ssl"
     chmod 600 "$PANEL_DIR/ssl/"*
-
-    # Create auto-renewal hook
-    cat > /etc/letsencrypt/renewal-hooks/post/panel-reload.sh << 'EOF'
-#!/bin/bash
-cp "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" "/home/panel/ssl/cert.pem"
-cp "/etc/letsencrypt/live/$DOMAIN/privkey.pem" "/home/panel/ssl/key.pem"
-chown panel:panel /home/panel/ssl/*
-systemctl restart panel-vps
-EOF
-    chmod +x /etc/letsencrypt/renewal-hooks/post/panel-reload.sh
 
     echo ""
     echo "✅ Let's Encrypt SSL configured!"
-    echo "Certificate will auto-renew via certbot timer"
 
 # ====== SELF-SIGNED ======
 else
@@ -98,13 +84,12 @@ else
 
     mkdir -p "$PANEL_DIR/ssl"
 
-    # Generate self-signed certificate
+    # Generate self-signed certificate with proper settings
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout "$PANEL_DIR/ssl/key.pem" \
         -out "$PANEL_DIR/ssl/cert.pem" \
         -subj "/C=ID/ST=State/L=City/O=NeuroPanel/CN=localhost"
 
-    chown -R panel:panel "$PANEL_DIR/ssl" 2>/dev/null || true
     chmod 600 "$PANEL_DIR/ssl/"*
 
     echo ""
@@ -112,65 +97,7 @@ else
     echo "⚠️ Browser will show security warning (normal for self-signed)"
 fi
 
-# Create SSL-enabled server wrapper
-echo ""
-echo "Creating HTTPS server..."
-
-cat > "$PANEL_DIR/server-ssl.js" << 'EOF'
-const https = require('https');
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-
-// Check if SSL certificates exist
-const sslDir = path.join(__dirname, 'ssl');
-const certPath = path.join(sslDir, 'cert.pem');
-const keyPath = path.join(sslDir, 'key.pem');
-
-if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
-    // Load the main app
-    const app = require('./server');
-
-    const options = {
-        key: fs.readFileSync(keyPath),
-        cert: fs.readFileSync(certPath)
-    };
-
-    // HTTPS server on port 443
-    const HTTPS_PORT = process.env.HTTPS_PORT || 443;
-    const HTTP_PORT = process.env.PORT || 3000;
-
-    https.createServer(options, app).listen(HTTPS_PORT, () => {
-        console.log(`HTTPS server running on port ${HTTPS_PORT}`);
-    });
-
-    // HTTP redirect to HTTPS
-    http.createServer((req, res) => {
-        const host = req.headers.host?.replace(`:${HTTP_PORT}`, `:${HTTPS_PORT}`) || `localhost:${HTTPS_PORT}`;
-        res.writeHead(301, { Location: `https://${host}${req.url}` });
-        res.end();
-    }).listen(HTTP_PORT, () => {
-        console.log(`HTTP redirect server on port ${HTTP_PORT}`);
-    });
-} else {
-    console.log('SSL certificates not found. Run ssl-setup.sh first.');
-    console.log('Starting in HTTP mode...');
-    require('./server');
-}
-EOF
-
-# Update server.js to export app
-echo ""
-echo "Updating server.js to support SSL..."
-
-# Check if server.js already exports app
-if ! grep -q "module.exports = app" "$PANEL_DIR/server.js"; then
-    # Add export at the end (before listen)
-    sed -i 's/app.listen(PORT/module.exports = app;\n\nif (require.main === module) {\n    app.listen(PORT/g' "$PANEL_DIR/server.js"
-    echo "})" >> "$PANEL_DIR/server.js"
-fi
-
-# Update systemd service
+# Update systemd service to run on ports 80 and 443
 cat > /etc/systemd/system/panel-vps.service << EOF
 [Unit]
 Description=NeuroPanel VPS Management
@@ -180,14 +107,15 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=$PANEL_DIR
-ExecStart=/usr/bin/node $PANEL_DIR/server-ssl.js
+ExecStart=/usr/bin/node $PANEL_DIR/server.js
 Restart=always
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
 Environment=NODE_ENV=production
-Environment=PORT=80
+Environment=PORT=3000
 Environment=HTTPS_PORT=443
+Environment=ENABLE_SSL=true
 
 [Install]
 WantedBy=multi-user.target
@@ -201,14 +129,15 @@ echo "========================================"
 echo "   SSL Setup Complete! 🔒"
 echo "========================================"
 echo ""
-echo "Access your panel at:"
 if [ "$SSL_TYPE" == "letsencrypt" ]; then
+    echo "Access your panel at:"
     echo "  https://$DOMAIN"
 else
+    echo "Access your panel at:"
     echo "  https://YOUR_IP"
+    echo ""
+    echo "Note: If using self-signed certificate,"
+    echo "you'll need to accept the security warning"
+    echo "in your browser."
 fi
-echo ""
-echo "Note: If using self-signed certificate,"
-echo "you'll need to accept the security warning"
-echo "in your browser."
 echo ""

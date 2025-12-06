@@ -656,15 +656,41 @@ function loadInstanceSettings() {
 
     document.getElementById('instanceMaxMemory').value = currentInstanceData.maxMemory || 100;
     document.getElementById('instanceAutoRestart').checked = currentInstanceData.autoRestart !== false;
+
+    // File settings
+    const defaultMainFile = currentInstanceData.runtime === 'python' ? 'app.py' : 'app.js';
+    const defaultReqFile = currentInstanceData.runtime === 'python' ? 'requirements.txt' : 'package.json';
+
+    document.getElementById('instanceMainFile').value = currentInstanceData.mainFile || defaultMainFile;
+    document.getElementById('instanceRequirementsFile').value = currentInstanceData.requirementsFile || defaultReqFile;
+    document.getElementById('instanceAutoInstall').checked = currentInstanceData.autoInstall !== false;
 }
 
 async function saveInstanceSettings() {
     const maxMemory = document.getElementById('instanceMaxMemory').value;
     const autoRestart = document.getElementById('instanceAutoRestart').checked;
+    const mainFile = document.getElementById('instanceMainFile').value;
+    const requirementsFile = document.getElementById('instanceRequirementsFile').value;
+    const autoInstall = document.getElementById('instanceAutoInstall').checked;
 
-    const data = await API.put(`/api/instance/${currentInstance}/config`, { maxMemory, autoRestart });
+    const data = await API.put(`/api/instance/${currentInstance}/config`, {
+        maxMemory,
+        autoRestart,
+        mainFile,
+        requirementsFile,
+        autoInstall
+    });
+
     if (data.success) {
         showToast('Settings saved', 'success');
+        // Update local data
+        if (currentInstanceData) {
+            currentInstanceData.maxMemory = maxMemory;
+            currentInstanceData.autoRestart = autoRestart;
+            currentInstanceData.mainFile = mainFile;
+            currentInstanceData.requirementsFile = requirementsFile;
+            currentInstanceData.autoInstall = autoInstall;
+        }
     } else {
         showToast(data.error, 'error');
     }
@@ -1209,17 +1235,7 @@ function setupEventListeners() {
         });
     });
 
-    // Close modals on outside click
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('active');
-                if (modal.id === 'instanceModal') {
-                    closeInstanceDetail();
-                }
-            }
-        });
-    });
+    // Don't close modals on outside click - only use close buttons
 }
 
 // ============ Initialize ============

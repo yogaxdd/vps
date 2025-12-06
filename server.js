@@ -209,9 +209,17 @@ app.post('/api/instance/:id/start', authManager.authMiddleware, async (req, res)
             return res.status(404).json({ success: false, error: 'Instance not found' });
         }
 
-        await pm2Manager.startProcess(id, instance.runtime, instance.maxMemory);
+        // Get custom file settings from instance config
+        const options = {
+            mainFile: instance.mainFile,
+            requirementsFile: instance.requirementsFile,
+            autoInstall: instance.autoInstall !== false // Default true
+        };
+
+        logManager.append(id, '[NeuroPanel] Starting bot...');
+        await pm2Manager.startProcess(id, instance.runtime, instance.maxMemory, options);
         instanceManager.updateStatus(id, 'running');
-        logManager.append(id, 'Bot started via Panel');
+        logManager.append(id, '[NeuroPanel] Bot started successfully');
 
         res.json({ success: true, message: 'Bot started' });
     } catch (err) {
@@ -244,6 +252,32 @@ app.post('/api/instance/:id/restart', authManager.authMiddleware, async (req, re
         logManager.append(id, 'Bot restarted via Panel');
 
         res.json({ success: true, message: 'Bot restarted' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Update instance config
+app.put('/api/instance/:id/config', authManager.authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const { maxMemory, autoRestart, mainFile, requirementsFile, autoInstall } = req.body;
+
+        const instance = instanceManager.get(id);
+        if (!instance) {
+            return res.status(404).json({ success: false, error: 'Instance not found' });
+        }
+
+        // Update config
+        if (maxMemory !== undefined) instance.maxMemory = parseInt(maxMemory);
+        if (autoRestart !== undefined) instance.autoRestart = autoRestart;
+        if (mainFile !== undefined) instance.mainFile = mainFile;
+        if (requirementsFile !== undefined) instance.requirementsFile = requirementsFile;
+        if (autoInstall !== undefined) instance.autoInstall = autoInstall;
+
+        instanceManager.update(id, instance);
+
+        res.json({ success: true, message: 'Config updated', instance });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -1052,8 +1086,48 @@ app.use((err, req, res, next) => {
 
 // ============ START SERVER ============
 
-app.listen(PORT, () => {
-    console.log(`NeuroPanel running on port ${PORT}`);
+const startServer = () => {
+    const ENABLE_SSL = process.env.ENABLE_SSL === 'true';
+    const HTTPS_PORT = process.env.HTTPS_PORT || 443;
+
+    if (ENABLE_SSL) {
+        const https = require('https');
+        const http = require('http');
+        const sslDir = path.join(__dirname, 'ssl');
+        const certPath = path.join(sslDir, 'cert.pem');
+        const keyPath = path.join(sslDir, 'key.pem');
+
+        if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+            const options = {
+                key: fs.readFileSync(keyPath),
+                cert: fs.readFileSync(certPath)
+            };
+
+            // HTTPS server
+            https.createServer(options, app).listen(HTTPS_PORT, () => {
+                console.log(`NeuroPanel HTTPS running on port ${HTTPS_PORT}`);
+            });
+
+            // HTTP redirect to HTTPS
+            http.createServer((req, res) => {
+                const host = req.headers.host?.split(':')[0] || 'localhost';
+                res.writeHead(301, { Location: `https://${host}:${HTTPS_PORT}${req.url}` });
+                res.end();
+            }).listen(PORT, () => {
+                console.log(`HTTP redirect on port ${PORT} -> HTTPS ${HTTPS_PORT}`);
+            });
+        } else {
+            console.log('SSL certificates not found. Starting HTTP only...');
+            app.listen(PORT, () => {
+                console.log(`NeuroPanel running on port ${PORT}`);
+            });
+        }
+    } else {
+        app.listen(PORT, () => {
+            console.log(`NeuroPanel running on port ${PORT}`);
+        });
+    }
+
     console.log(`cgroups v2 available: ${cgroupManager.isAvailable()}`);
     console.log(`Default login: admin / admin123`);
     console.log(`Schedules loaded: ${schedulerManager.list().length}`);
@@ -1061,4 +1135,6 @@ app.listen(PORT, () => {
     if (cgroupManager.isAvailable()) {
         cgroupManager.init();
     }
-});
+};
+
+startServer();
