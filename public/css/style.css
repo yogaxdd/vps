@@ -245,11 +245,11 @@ body {
 
 /* Page Sections */
 .page {
-    display: none;
+    display: none !important;
 }
 
 .page.active {
-    display: block;
+    display: block !important;
 }
 
 .header {
