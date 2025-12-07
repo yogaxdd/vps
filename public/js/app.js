@@ -299,7 +299,7 @@ async function startInstance(id) {
     if (data.success) {
         showToast(`${id} started`, 'success');
         loadInstances();
-        if (currentInstance === id) updateInstanceStatus();
+        if (currentInstance === id) updatePellaStatus();
     } else {
         showToast(data.error, 'error');
     }
@@ -311,7 +311,7 @@ async function stopInstance(id) {
     if (data.success) {
         showToast(`${id} stopped`, 'success');
         loadInstances();
-        if (currentInstance === id) updateInstanceStatus();
+        if (currentInstance === id) updatePellaStatus();
     } else {
         showToast(data.error, 'error');
     }
@@ -323,7 +323,7 @@ async function restartInstance(id) {
     if (data.success) {
         showToast(`${id} restarted`, 'success');
         loadInstances();
-        if (currentInstance === id) updateInstanceStatus();
+        if (currentInstance === id) updatePellaStatus();
     } else {
         showToast(data.error, 'error');
     }
@@ -660,11 +660,13 @@ async function refreshConsole() {
     if (!currentInstance) return;
 
     const data = await API.get(`/api/instance/${currentInstance}/logs?lines=500`);
-    if (data.success) {
-        const logs = data.logs.lines || [];
-        document.getElementById('consoleLines').textContent = `${logs.length} lines`;
+    if (data && data.success) {
+        const logs = data.logs?.lines || [];
+        const consoleLinesEl = document.getElementById('consoleLines');
+        if (consoleLinesEl) consoleLinesEl.textContent = `${logs.length} lines`;
 
         const output = document.getElementById('consoleOutput');
+        if (!output) return;
         const wasAtBottom = output.scrollTop + output.clientHeight >= output.scrollHeight - 50;
 
         output.innerHTML = logs.map(line => {
@@ -815,33 +817,38 @@ async function loadPackages() {
     if (!currentInstance) return;
 
     const data = await API.get(`/api/instance/${currentInstance}/packages`);
-    if (data.success) {
+    if (data && data.success) {
         const fileName = data.runtime === 'node' ? 'package.json' : 'requirements.txt';
-        document.getElementById('packageFileName').textContent = fileName;
+        const packageFileNameEl = document.getElementById('packageFileName');
+        if (packageFileNameEl) packageFileNameEl.textContent = fileName;
 
         // Missing packages
         const missingAlert = document.getElementById('missingPackagesAlert');
         const missingList = document.getElementById('missingPackagesList');
 
-        if (data.missingPackages && data.missingPackages.length > 0) {
-            missingAlert.style.display = 'block';
-            missingList.innerHTML = data.missingPackages.map(p =>
-                `<span style="display:inline-block;background:rgba(255,171,0,0.2);padding:4px 10px;border-radius:4px;margin:4px;font-family:monospace;">${p}</span>`
-            ).join('');
-        } else {
-            missingAlert.style.display = 'none';
+        if (missingAlert && missingList) {
+            if (data.missingPackages && data.missingPackages.length > 0) {
+                missingAlert.style.display = 'block';
+                missingList.innerHTML = data.missingPackages.map(p =>
+                    `<span style="display:inline-block;background:rgba(255,171,0,0.2);padding:4px 10px;border-radius:4px;margin:4px;font-family:monospace;">${p}</span>`
+                ).join('');
+            } else {
+                missingAlert.style.display = 'none';
+            }
         }
 
         // Dependencies
         const depsList = document.getElementById('dependenciesList');
-        const deps = Object.entries(data.dependencies || {});
+        if (depsList) {
+            const deps = Object.entries(data.dependencies || {});
 
-        if (deps.length > 0) {
-            depsList.innerHTML = deps.map(([name, version]) =>
-                `<div class="dep-item"><span>${name}</span><span style="color:var(--accent)">${version}</span></div>`
-            ).join('');
-        } else {
-            depsList.innerHTML = '<p class="empty-state">No dependencies installed</p>';
+            if (deps.length > 0) {
+                depsList.innerHTML = deps.map(([name, version]) =>
+                    `<div class="dep-item"><span>${name}</span><span style="color:var(--accent)">${version}</span></div>`
+                ).join('');
+            } else {
+                depsList.innerHTML = '<p class="empty-state">No dependencies installed</p>';
+            }
         }
     }
 }
@@ -883,16 +890,22 @@ async function installMissingPackages() {
 function loadInstanceSettings() {
     if (!currentInstanceData) return;
 
-    document.getElementById('instanceMaxMemory').value = currentInstanceData.maxMemory || 100;
-    document.getElementById('instanceAutoRestart').checked = currentInstanceData.autoRestart !== false;
+    const maxMemEl = document.getElementById('instanceMaxMemory');
+    const autoRestartEl = document.getElementById('instanceAutoRestart');
+    const mainFileEl = document.getElementById('instanceMainFile');
+    const reqFileEl = document.getElementById('instanceRequirementsFile');
+    const autoInstallEl = document.getElementById('instanceAutoInstall');
+
+    if (maxMemEl) maxMemEl.value = currentInstanceData.maxMemory || 100;
+    if (autoRestartEl) autoRestartEl.checked = currentInstanceData.autoRestart !== false;
 
     // File settings
     const defaultMainFile = currentInstanceData.runtime === 'python' ? 'app.py' : 'app.js';
     const defaultReqFile = currentInstanceData.runtime === 'python' ? 'requirements.txt' : 'package.json';
 
-    document.getElementById('instanceMainFile').value = currentInstanceData.mainFile || defaultMainFile;
-    document.getElementById('instanceRequirementsFile').value = currentInstanceData.requirementsFile || defaultReqFile;
-    document.getElementById('instanceAutoInstall').checked = currentInstanceData.autoInstall !== false;
+    if (mainFileEl) mainFileEl.value = currentInstanceData.mainFile || defaultMainFile;
+    if (reqFileEl) reqFileEl.value = currentInstanceData.requirementsFile || defaultReqFile;
+    if (autoInstallEl) autoInstallEl.checked = currentInstanceData.autoInstall !== false;
 }
 
 async function saveInstanceSettings() {
@@ -1341,18 +1354,30 @@ function setupEventListeners() {
 
     // Copy Server ID
     document.getElementById('btnCopyServerId')?.addEventListener('click', () => {
-        const serverId = document.getElementById('serverIdDisplay').value;
-        navigator.clipboard.writeText(serverId).then(() => {
-            showToast('Server ID copied!', 'success');
-        });
+        const serverId = document.getElementById('serverIdDisplay')?.value;
+        if (serverId && navigator.clipboard) {
+            navigator.clipboard.writeText(serverId).then(() => {
+                showToast('Server ID copied!', 'success');
+            }).catch(() => {
+                showToast('Copy failed - try HTTPS', 'error');
+            });
+        } else {
+            showToast('Clipboard not available', 'error');
+        }
     });
 
     // Copy Console
     document.getElementById('btnCopyConsole')?.addEventListener('click', () => {
-        const output = document.getElementById('consoleOutput').textContent;
-        navigator.clipboard.writeText(output).then(() => {
-            showToast('Console output copied!', 'success');
-        });
+        const output = document.getElementById('consoleOutput')?.textContent;
+        if (output && navigator.clipboard) {
+            navigator.clipboard.writeText(output).then(() => {
+                showToast('Console output copied!', 'success');
+            }).catch(() => {
+                showToast('Copy failed - try HTTPS', 'error');
+            });
+        } else {
+            showToast('Clipboard not available', 'error');
+        }
     });
 
     // Environment Variables
