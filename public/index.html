@@ -20,7 +20,7 @@
         <nav class="sidebar-nav">
             <div class="nav-section">
                 <span class="nav-label">MAIN</span>
-                <a href="#" class="nav-item active" data-page="dashboard">
+                <a href="index.html" class="nav-item active">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7"></rect>
                         <rect x="14" y="3" width="7" height="7"></rect>
@@ -29,7 +29,7 @@
                     </svg>
                     Dashboard
                 </a>
-                <a href="#" class="nav-item" data-page="instances">
+                <a href="instances.html" class="nav-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
                         <line x1="8" y1="21" x2="16" y2="21"></line>
@@ -38,7 +38,7 @@
                     Instances
                     <span class="nav-badge" id="instanceCount">0</span>
                 </a>
-                <a href="#" class="nav-item" data-page="schedules">
+                <a href="schedules.html" class="nav-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
@@ -48,7 +48,7 @@
             </div>
             <div class="nav-section">
                 <span class="nav-label">MANAGEMENT</span>
-                <a href="#" class="nav-item" data-page="users" id="navUsers" style="display: none;">
+                <a href="users.html" class="nav-item" id="navUsers" style="display: none;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                         <circle cx="9" cy="7" r="4"></circle>
@@ -57,7 +57,7 @@
                     </svg>
                     Users
                 </a>
-                <a href="#" class="nav-item" data-page="apikeys">
+                <a href="apikeys.html" class="nav-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path
                             d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4">
@@ -65,7 +65,7 @@
                     </svg>
                     API Keys
                 </a>
-                <a href="#" class="nav-item" data-page="settings">
+                <a href="settings.html" class="nav-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"></circle>
                         <path
@@ -174,7 +174,7 @@
                         <div class="action-icon blue">➕</div>
                         <span>New Instance</span>
                     </button>
-                    <button class="action-card" onclick="navigateTo('instances')">
+                    <button class="action-card" onclick="location.href='instances.html'">
                         <div class="action-icon green">📋</div>
                         <span>View All</span>
                     </button>
@@ -205,221 +205,7 @@
             </div>
         </section>
 
-        <!-- Instances Page -->
-        <section class="page" id="pageInstances">
-            <div class="card">
-                <div class="card-header">
-                    <h3>All Instances</h3>
-                    <div class="card-actions">
-                        <select id="filterRuntime" class="filter-select">
-                            <option value="">All Runtimes</option>
-                            <option value="node">NodeJS</option>
-                            <option value="python">Python</option>
-                        </select>
-                        <select id="filterStatus" class="filter-select">
-                            <option value="">All Status</option>
-                            <option value="online">Running</option>
-                            <option value="stopped">Stopped</option>
-                        </select>
-                        <input type="text" class="search-input" placeholder="Search..." id="searchInstances">
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="instances-table" id="instancesTable">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Runtime</th>
-                                    <th>Memory</th>
-                                    <th>Status</th>
-                                    <th>Created</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="instancesBody">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </section>
 
-        <!-- Users Page -->
-        <section class="page" id="pageUsers">
-            <div class="card">
-                <div class="card-header">
-                    <h3>User Management</h3>
-                    <button class="btn btn-primary" id="btnNewUser">+ New User</button>
-                </div>
-                <div class="card-body">
-                    <table class="users-table">
-                        <thead>
-                            <tr>
-                                <th>Username</th>
-                                <th>Role</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersBody">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- Schedules Page -->
-        <section class="page" id="pageSchedules">
-            <div class="card">
-                <div class="card-header">
-                    <h3>⏰ Task Scheduler</h3>
-                    <button class="btn btn-primary" id="btnNewSchedule">+ New Schedule</button>
-                </div>
-                <div class="card-body">
-                    <div class="schedules-list" id="schedulesList">
-                        <p class="empty-state">No scheduled tasks. Click "New Schedule" to create one.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- API Keys Page -->
-        <section class="page" id="PageApikeys">
-            <div class="card">
-                <div class="card-header">
-                    <h3>🔑 API Keys</h3>
-                    <button class="btn btn-primary" id="btnNewApiKey">+ New API Key</button>
-                </div>
-                <div class="card-body">
-                    <div class="api-info"
-                        style="margin-bottom: 20px; padding: 16px; background: rgba(0,212,255,0.1); border-radius: 8px;">
-                        <p><strong>API Endpoint:</strong> <code id="apiEndpoint">https://your-domain.com/api</code></p>
-                        <p style="margin-top: 8px; color: var(--text-muted); font-size: 13px;">
-                            Use API keys to authenticate requests. Include in header:
-                            <code>Authorization: Bearer YOUR_API_KEY</code>
-                        </p>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Key Prefix</th>
-                                <th>Last Used</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="apiKeysBody">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- Settings Page -->
-        <section class="page" id="pageSettings">
-            <div class="settings-grid">
-                <!-- Panel Settings -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>🎨 Panel Settings</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="setting-item">
-                            <label>Panel Name</label>
-                            <input type="text" id="settingPanelName" value="NeuroPanel" placeholder="Panel Name">
-                            <small>The name displayed in sidebar and title</small>
-                        </div>
-                        <div class="setting-item">
-                            <label>Accent Color</label>
-                            <div class="color-options">
-                                <button class="color-btn active" data-color="#00d4ff"
-                                    style="background:#00d4ff"></button>
-                                <button class="color-btn" data-color="#00e676" style="background:#00e676"></button>
-                                <button class="color-btn" data-color="#ff5252" style="background:#ff5252"></button>
-                                <button class="color-btn" data-color="#ffab00" style="background:#ffab00"></button>
-                                <button class="color-btn" data-color="#7c4dff" style="background:#7c4dff"></button>
-                                <button class="color-btn" data-color="#e91e63" style="background:#e91e63"></button>
-                            </div>
-                        </div>
-                        <button class="btn btn-primary" id="btnSaveSettings">Save Settings</button>
-                    </div>
-                </div>
-
-                <!-- Account Settings -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>👤 Account Settings</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="setting-item">
-                            <label>Current Password</label>
-                            <input type="password" id="currentPassword" placeholder="Current password">
-                        </div>
-                        <div class="setting-item">
-                            <label>New Password</label>
-                            <input type="password" id="newPassword" placeholder="New password">
-                        </div>
-                        <div class="setting-item">
-                            <label>Confirm Password</label>
-                            <input type="password" id="confirmPassword" placeholder="Confirm new password">
-                        </div>
-                        <button class="btn btn-primary" id="btnChangePassword">Change Password</button>
-                    </div>
-                </div>
-
-                <!-- System Info -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>📊 System Info</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="system-info">
-                            <div class="info-row">
-                                <span>Panel Version</span>
-                                <span>v1.0.0</span>
-                            </div>
-                            <div class="info-row">
-                                <span>Node.js</span>
-                                <span id="infoNodeVersion">Loading...</span>
-                            </div>
-                            <div class="info-row">
-                                <span>PM2 Status</span>
-                                <span class="status-badge running">Active</span>
-                            </div>
-                            <div class="info-row">
-                                <span>cgroups</span>
-                                <span id="infoCgroups">Loading...</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Danger Zone -->
-                <div class="card danger-card">
-                    <div class="card-header">
-                        <h3>⚠️ Danger Zone</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="danger-item">
-                            <div>
-                                <strong>Stop All Instances</strong>
-                                <p>Stop all running bot instances</p>
-                            </div>
-                            <button class="btn btn-danger" onclick="stopAllInstances()">Stop All</button>
-                        </div>
-                        <div class="danger-item">
-                            <div>
-                                <strong>Restart Panel</strong>
-                                <p>Restart the panel service</p>
-                            </div>
-                            <button class="btn btn-danger" onclick="restartPanel()">Restart</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
     </main>
 
     <!-- Instance Detail Modal (Pella-Style) -->
@@ -761,7 +547,8 @@
         </div>
     </div>
 
-    <script src="/js/app.js"></script>
+    <script src="js/app.js"></script>
+    <script> document.addEventListener('DOMContentLoaded', loadInstances); </script>
 </body>
 
 </html>

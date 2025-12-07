@@ -114,9 +114,11 @@ function checkAuth() {
 function setupNavigation() {
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', (e) => {
-            e.preventDefault();
             const page = item.dataset.page;
-            if (page) navigateTo(page);
+            if (page) {
+                e.preventDefault();
+                navigateTo(page);
+            }
         });
     });
 }
@@ -167,6 +169,9 @@ function renderStats() {
     const stopped = total - running;
     const memory = instances.reduce((sum, i) => sum + (i.pm2?.memory || 0), 0);
 
+    const elTotal = document.getElementById('statTotal');
+    if (!elTotal) return;
+
     document.getElementById('statTotal').textContent = total;
     document.getElementById('statRunning').textContent = running;
     document.getElementById('statStopped').textContent = stopped;
@@ -175,6 +180,7 @@ function renderStats() {
 
 function renderDashboardGrid() {
     const container = document.getElementById('allInstancesGrid');
+    if (!container) return;
     const search = document.getElementById('dashboardSearch')?.value?.toLowerCase() || '';
 
     const filtered = instances.filter(i => i.userId.toLowerCase().includes(search));
@@ -213,6 +219,8 @@ function renderDashboardGrid() {
 
 function renderInstancesTable() {
     const container = document.getElementById('instancesBody');
+    if (!container) return;
+
     const search = document.getElementById('searchInstances')?.value?.toLowerCase() || '';
     const filterRuntime = document.getElementById('filterRuntime')?.value || '';
     const filterStatus = document.getElementById('filterStatus')?.value || '';
@@ -980,6 +988,7 @@ async function loadInstanceSchedules() {
 
     const data = await API.get(`/api/instance/${currentInstance}/schedules`);
     const container = document.getElementById('instanceSchedulesList');
+    if (!container) return;
 
     if (data.success && data.schedules.length > 0) {
         container.innerHTML = data.schedules.map(s => `
@@ -1036,6 +1045,7 @@ async function deleteSchedule(id) {
 async function loadSchedules() {
     const data = await API.get('/api/schedules');
     const container = document.getElementById('schedulesList');
+    if (!container) return;
 
     if (data.success && data.schedules.length > 0) {
         container.innerHTML = data.schedules.map(s => `
@@ -1066,6 +1076,7 @@ async function loadSchedules() {
 async function loadApiKeys() {
     const data = await API.get('/api/apikeys');
     const container = document.getElementById('apiKeysBody');
+    if (!container) return;
 
     // Update API endpoint display
     document.getElementById('apiEndpoint').textContent = window.location.origin + '/api';
@@ -1114,6 +1125,7 @@ async function loadUsers() {
     const data = await API.get('/api/users');
     if (data.success) {
         const container = document.getElementById('usersBody');
+        if (!container) return;
         container.innerHTML = data.users.map(u => `
             <tr>
                 <td><strong>${u.username}</strong></td>
@@ -1145,7 +1157,10 @@ async function deleteUser(username) {
 // ============ Settings Page ============
 function loadSettingsPage() {
     const settings = loadSettings();
-    document.getElementById('settingPanelName').value = settings.panelName;
+    const panelNameInput = document.getElementById('settingPanelName');
+    if (!panelNameInput) return;
+
+    panelNameInput.value = settings.panelName;
 
     document.querySelectorAll('.color-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.color === settings.accentColor);
@@ -1504,5 +1519,4 @@ document.addEventListener('DOMContentLoaded', () => {
     applySettings();
     setupNavigation();
     setupEventListeners();
-    loadInstances();
 });

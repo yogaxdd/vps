@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">NeuroPanel - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1 id="panelName">Neuro<span>Panel</span></h1>
+            <small class="version">v1.0.0</small>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <span class="nav-label">MAIN</span>
+                <a href="index.html" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="instances.html" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    Instances
+                    <span class="nav-badge" id="instanceCount">0</span>
+                </a>
+                <a href="schedules.html" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Schedules
+                </a>
+            </div>
+            <div class="nav-section">
+                <span class="nav-label">MANAGEMENT</span>
+                <a href="users.html" class="nav-item" id="navUsers" style="display: none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Users
+                </a>
+                <a href="apikeys.html" class="nav-item active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4">
+                        </path>
+                    </svg>
+                    API Keys
+                </a>
+                <a href="settings.html" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                        </path>
+                    </svg>
+                    Settings
+                </a>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div class="user-details">
+                    <span id="currentUser">admin</span>
+                    <small id="currentRole">Administrator</small>
+                </div>
+            </div>
+            <button class="btn-logout" id="btnLogout">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                Sign Out
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <button class="menu-toggle" id="menuToggle">☰</button>
+            <h2 id="pageTitleHeader">API Keys</h2>
+            <div class="header-actions">
+                <button class="btn btn-primary" id="btnNewInstance">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="width:16px;height:16px;margin-right:6px;">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    New Instance
+                </button>
+            </div>
+        </header>
+
+
+
+        <!-- API Keys Page -->
+        <section class="page active" id="PageApikeys">
+            <div class="card">
+                <div class="card-header">
+                    <h3>🔑 API Keys</h3>
+                    <button class="btn btn-primary" id="btnNewApiKey">+ New API Key</button>
+                </div>
+                <div class="card-body">
+                    <div class="api-info"
+                        style="margin-bottom: 20px; padding: 16px; background: rgba(0,212,255,0.1); border-radius: 8px;">
+                        <p><strong>API Endpoint:</strong> <code id="apiEndpoint">https://your-domain.com/api</code></p>
+                        <p style="margin-top: 8px; color: var(--text-muted); font-size: 13px;">
+                            Use API keys to authenticate requests. Include in header:
+                            <code>Authorization: Bearer YOUR_API_KEY</code>
+                        </p>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Key Prefix</th>
+                                <th>Last Used</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="apiKeysBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+    </main>
+
+    <!-- Instance Detail Modal (Pella-Style) -->
+    <div class="modal" id="instanceModal">
+        <div class="modal-content modal-fullscreen">
+            <div class="pella-layout">
+                <!-- Pella Header -->
+                <div class="pella-header">
+                    <div class="pella-header-left">
+                        <button class="btn-back" id="btnBackToList">← Back</button>
+                        <h2 id="instanceDetailName">Instance</h2>
+                        <span class="pella-expires" id="instanceExpires">No expiration</span>
+                    </div>
+                    <div class="pella-header-right">
+                        <span class="pella-status running" id="pellaStatus">
+                            <span class="status-dot"></span>
+                            RUNNING
+                        </span>
+                        <button class="btn btn-danger" id="btnPellaStop">⏹ STOP</button>
+                        <button class="btn btn-secondary" id="btnPellaRestart">🔄 RESTART</button>
+                        <button class="btn btn-primary" id="btnPellaDeploy">📦 New Deploy</button>
+                    </div>
+                </div>
+
+                <!-- Pella Body -->
+                <div class="pella-body">
+                    <!-- Pella Sidebar -->
+                    <div class="pella-sidebar">
+                        <nav class="pella-nav">
+                            <a href="#" class="pella-nav-item active" data-tab="overview">
+                                <span class="pella-nav-icon">📋</span>
+                                Overview
+                            </a>
+                            <a href="#" class="pella-nav-item" data-tab="manage">
+                                <span class="pella-nav-icon">🔧</span>
+                                Manage
+                            </a>
+                            <a href="#" class="pella-nav-item" data-tab="files">
+                                <span class="pella-nav-icon">📁</span>
+                                Files
+                            </a>
+                            <a href="#" class="pella-nav-item" data-tab="backups">
+                                <span class="pella-nav-icon">💾</span>
+                                Backups
+                            </a>
+                            <a href="#" class="pella-nav-item" data-tab="settings">
+                                <span class="pella-nav-icon">⚙️</span>
+                                Settings
+                            </a>
+                        </nav>
+                    </div>
+
+                    <!-- Pella Content -->
+                    <div class="pella-content">
+                        <!-- Overview Tab (Console) -->
+                        <div class="pella-tab active" id="pellaTabOverview">
+                            <div class="pella-section-header">
+                                <h3>CONSOLE</h3>
+                                <button class="btn btn-small" id="btnCopyConsole">📋 Copy</button>
+                            </div>
+                            <div class="console-wrapper">
+                                <div class="console-output" id="consoleOutput"></div>
+                                <div class="console-input-wrapper">
+                                    <span class="console-prompt">$</span>
+                                    <input type="text" class="console-input" id="consoleInput"
+                                        placeholder="Enter command...">
+                                    <button class="btn btn-small btn-primary" id="btnSendCommand">Send</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Manage Tab (Packages + Usage) -->
+                        <div class="pella-tab" id="pellaTabManage">
+                            <div class="pella-manage-grid">
+                                <!-- Packages Section -->
+                                <div class="pella-manage-section">
+                                    <div class="pella-section-header">
+                                        <h3>PACKAGES</h3>
+                                        <button class="btn btn-small btn-primary" id="btnAddPackage">+ Add</button>
+                                    </div>
+                                    <div class="package-install" style="margin-bottom: 16px;">
+                                        <input type="text" id="newPackageName" placeholder="e.g., axios discord.js">
+                                        <button class="btn btn-primary" id="btnInstallPackage">Install</button>
+                                    </div>
+                                    <div id="missingPackagesAlert" class="alert alert-warning" style="display: none;">
+                                        <strong>⚠️ Missing Packages:</strong>
+                                        <div id="missingPackagesList"></div>
+                                        <button class="btn btn-small btn-primary" id="btnInstallMissing">Install
+                                            Missing</button>
+                                    </div>
+                                    <div class="dependencies-list" id="dependenciesList">
+                                        <p class="empty-state">No dependencies</p>
+                                    </div>
+                                </div>
+
+                                <!-- Usage Section -->
+                                <div class="pella-manage-section">
+                                    <div class="pella-section-header">
+                                        <h3>USAGE</h3>
+                                        <div class="usage-legend">
+                                            <span class="legend-item"><span class="legend-dot cpu"></span>CPU</span>
+                                            <span class="legend-item"><span class="legend-dot ram"></span>RAM</span>
+                                        </div>
+                                    </div>
+                                    <div class="usage-chart-container">
+                                        <canvas id="usageChart"></canvas>
+                                    </div>
+                                    <div class="usage-stats">
+                                        <div class="usage-stat">
+                                            <span class="usage-label">CPU</span>
+                                            <span class="usage-value" id="cpuUsage">0%</span>
+                                        </div>
+                                        <div class="usage-stat">
+                                            <span class="usage-label">RAM</span>
+                                            <span class="usage-value" id="ramUsage">0 MB</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Files Tab -->
+                        <div class="pella-tab" id="pellaTabFiles">
+                            <div class="pella-section-header">
+                                <h3>FILE MANAGER</h3>
+                                <div class="file-actions">
+                                    <button class="btn btn-small" id="btnNewFile">📄 New</button>
+                                    <button class="btn btn-small" id="btnNewFolder">📁 Folder</button>
+                                    <button class="btn btn-small" id="btnUploadFile">⬆️ Upload</button>
+                                    <input type="file" id="fileUploadInput" multiple style="display:none">
+                                </div>
+                            </div>
+                            <div class="file-manager">
+                                <div class="file-breadcrumb">
+                                    <span class="file-path" id="currentPath">/</span>
+                                </div>
+                                <div class="file-list" id="fileList">
+                                    <!-- Files will be rendered here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Backups Tab -->
+                        <div class="pella-tab" id="pellaTabBackups">
+                            <div class="pella-section-header">
+                                <h3>BACKUPS</h3>
+                                <button class="btn btn-primary" id="btnCreateBackup">Create Backup</button>
+                            </div>
+                            <div class="backups-list" id="backupsList">
+                                <p class="empty-state">No backups yet</p>
+                            </div>
+                        </div>
+
+                        <!-- Settings Tab -->
+                        <div class="pella-tab" id="pellaTabSettings">
+                            <div class="pella-settings-grid">
+                                <!-- Left Column: Server Settings -->
+                                <div class="pella-settings-section">
+                                    <div class="pella-section-header">
+                                        <h3>SETTINGS</h3>
+                                    </div>
+
+                                    <div class="setting-item">
+                                        <label>Server ID</label>
+                                        <div class="input-with-copy">
+                                            <input type="text" id="serverIdDisplay" readonly>
+                                            <button class="btn-copy" id="btnCopyServerId">📋</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="setting-item">
+                                        <label>Name</label>
+                                        <input type="text" id="instanceNameInput" placeholder="Instance name">
+                                    </div>
+
+                                    <div class="setting-item">
+                                        <label>Description</label>
+                                        <textarea id="instanceDescInput" placeholder="Description (optional)"
+                                            rows="3"></textarea>
+                                    </div>
+
+                                    <div class="setting-item">
+                                        <label>Main File</label>
+                                        <input type="text" id="instanceMainFile" placeholder="main.py">
+                                    </div>
+
+                                    <button class="btn btn-primary" id="btnSaveInstanceSettings"
+                                        style="width: 100%; margin-top: 16px;">SAVE</button>
+
+                                    <div class="danger-zone">
+                                        <h4>DANGER ZONE</h4>
+                                        <button class="btn btn-danger btn-full" id="btnDeleteInstance">DELETE</button>
+                                    </div>
+                                </div>
+
+                                <!-- Right Column: Environment Variables -->
+                                <div class="pella-settings-section">
+                                    <div class="pella-section-header">
+                                        <h3>ENVIRONMENT VARIABLES</h3>
+                                    </div>
+
+                                    <div class="env-vars-list" id="envVarsList">
+                                        <div class="env-var-row env-var-header">
+                                            <span>Key</span>
+                                            <span>Value</span>
+                                            <span></span>
+                                        </div>
+                                        <!-- Env vars will be rendered here -->
+                                    </div>
+
+                                    <div class="env-var-add">
+                                        <input type="text" id="newEnvKey" placeholder="e.g. CLIENT_KEY">
+                                        <input type="text" id="newEnvValue" placeholder="e.g. SECRET">
+                                        <button class="btn btn-small" id="btnAddEnvVar">+ Add</button>
+                                    </div>
+
+                                    <div class="env-var-actions">
+                                        <button class="btn btn-secondary" id="btnImportEnv">📥 Import</button>
+                                        <button class="btn btn-primary" id="btnSaveEnvVars">Save</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Editor Modal -->
+    <div class="modal" id="fileEditorModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>📝 <span id="fileEditorTitle">file.js</span></h3>
+                <div class="modal-actions">
+                    <button class="btn btn-small btn-primary" id="saveFileEditor">💾 Save</button>
+                    <button class="modal-close" id="closeFileEditor">&times;</button>
+                </div>
+            </div>
+            <div class="file-editor-container">
+                <textarea id="fileEditorContent" spellcheck="false"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Instance Modal -->
+    <div class="modal" id="newInstanceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🆕 Create New Instance</h3>
+                <button class="modal-close" id="closeNewInstance">&times;</button>
+            </div>
+            <form id="newInstanceForm">
+                <div class="form-group">
+                    <label>Instance ID</label>
+                    <input type="text" id="newInstanceId" placeholder="my-bot" required pattern="[a-zA-Z0-9_-]+">
+                    <small>Letters, numbers, underscore, dash only</small>
+                </div>
+                <div class="form-group">
+                    <label>Runtime</label>
+                    <div class="runtime-select">
+                        <label class="runtime-option">
+                            <input type="radio" name="runtime" value="node" checked>
+                            <div class="runtime-card">
+                                <span class="runtime-icon">🟢</span>
+                                <span>NodeJS</span>
+                            </div>
+                        </label>
+                        <label class="runtime-option">
+                            <input type="radio" name="runtime" value="python">
+                            <div class="runtime-card">
+                                <span class="runtime-icon">🐍</span>
+                                <span>Python</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Max Memory (MB)</label>
+                    <input type="range" id="newInstanceMemory" value="100" min="50" max="500" step="10">
+                    <div class="range-value"><span id="memoryValue">100</span> MB</div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelNewInstance">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Instance</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- New User Modal -->
+    <div class="modal" id="newUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>👤 Create New User</h3>
+                <button class="modal-close" id="closeNewUser">&times;</button>
+            </div>
+            <form id="newUserForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="newUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="newUserPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="newUserRole">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelNewUser">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- New File Modal -->
+    <div class="modal" id="newFileModal">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h3>📄 New File</h3>
+                <button class="modal-close" id="closeNewFile">&times;</button>
+            </div>
+            <form id="newFileForm">
+                <div class="form-group">
+                    <label>File Name</label>
+                    <input type="text" id="newFileName" placeholder="example.js" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelNewFile">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script> document.addEventListener('DOMContentLoaded', loadApiKeys); </script>
+</body>
+
+</html>
