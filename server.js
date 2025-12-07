@@ -439,8 +439,8 @@ app.post('/api/instance/:id/npm-install', authManager.authMiddleware, (req, res)
     }
 });
 
-// Install pip packages
-app.post('/api/instance/:id/pip-install', authManager.authMiddleware, (req, res) => {
+// Install pip packages (using venv)
+app.post('/api/instance/:id/pip-install', authManager.authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const { packages } = req.body; // Optional: specific packages
@@ -456,20 +456,44 @@ app.post('/api/instance/:id/pip-install', authManager.authMiddleware, (req, res)
             fs.writeFileSync(reqPath, '# Add your Python dependencies here\n');
         }
 
+        // Ensure venv exists
+        const venvPath = path.join(userDir, 'venv');
+        const venvPip = path.join(venvPath, 'bin', 'pip');
+
+        // Check if venv exists, if not create it
+        if (!fs.existsSync(venvPip)) {
+            logManager.append(id, '[NeuroPanel] Creating virtual environment...');
+
+            await new Promise((resolve, reject) => {
+                exec('python3 -m venv venv', { cwd: userDir, timeout: 60000 }, (error) => {
+                    if (error) {
+                        logManager.append(id, `venv creation failed: ${error.message}`);
+                        reject(error);
+                    } else {
+                        logManager.append(id, '[NeuroPanel] venv created successfully');
+                        resolve();
+                    }
+                });
+            });
+        }
+
+        // Use venv pip
+        const pipCmd = fs.existsSync(venvPip) ? venvPip : 'pip3';
         const cmd = packages
-            ? `pip3 install ${packages}`
-            : `pip3 install -r requirements.txt`;
+            ? `${pipCmd} install ${packages}`
+            : `${pipCmd} install -r requirements.txt`;
 
         logManager.append(id, `Running: ${cmd}`);
 
-        exec(cmd, { cwd: userDir, timeout: 120000 }, (error, stdout, stderr) => {
+        exec(cmd, { cwd: userDir, timeout: 180000 }, (error, stdout, stderr) => {
             if (error) {
                 logManager.append(id, `pip error: ${error.message}`);
+                if (stderr) logManager.append(id, stderr);
                 return res.json({ success: false, error: error.message, output: stderr });
             }
 
             logManager.append(id, `pip install completed`);
-            logManager.append(id, stdout);
+            if (stdout) logManager.append(id, stdout);
 
             res.json({ success: true, message: 'Packages installed', output: stdout });
         });
