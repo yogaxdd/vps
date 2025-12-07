@@ -94,7 +94,18 @@ function showToast(message, type = 'info') {
 // ============ Auth ============
 function checkAuth() {
     const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const userStr = localStorage.getItem('user');
+    let user = {};
+
+    try {
+        if (userStr && userStr !== 'undefined' && userStr !== 'null') {
+            user = JSON.parse(userStr);
+        }
+    } catch (e) {
+        console.warn('Invalid user data in localStorage, clearing...');
+        localStorage.removeItem('user');
+        user = {};
+    }
 
     if (!token) {
         window.location.href = '/login';
